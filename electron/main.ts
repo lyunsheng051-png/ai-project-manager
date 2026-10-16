@@ -1,9 +1,10 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, shell } from 'electron';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { access } from 'node:fs/promises';
 import { z } from 'zod';
 import { ProjectStore } from './repositories/project-store';
+import { ThemeStore } from './repositories/theme-store';
 import { scanProject, mergeScannedServices } from './services/scanner';
 import { GitService } from './services/git';
 import { ProcessService, orderServices } from './services/processes';
@@ -13,6 +14,7 @@ import type { DesktopEvent, ServiceProfile } from '../shared/contracts';
 
 if (process.env.AIPM_USER_DATA) app.setPath('userData', path.resolve(process.env.AIPM_USER_DATA));
 app.setName('项目工作台');
+nativeTheme.themeSource = 'dark';
 const locked = app.requestSingleInstanceLock();
 function reportLaunch(type: 'desktop-ready' | 'desktop-existing', extra: Record<string, unknown> = {}) {
   if (process.env.AIPM_DESKTOP_LAUNCH === '1' && process.connected) process.send?.({ type, ...extra });
@@ -26,6 +28,17 @@ if (process.env.AIPM_DESKTOP_LAUNCH === '1') {
 
 let window: BrowserWindow | null = null;
 let store: ProjectStore;
+let appearance: ThemeStore;
+function titleBarColors() {
+  const light = appearance.get() === 'light';
+  return { color: light ? '#edf3fa' : '#142135', symbolColor: light ? '#24364e' : '#dce6f3', height: 32 };
+}
+function applyNativeTheme() {
+  const theme = appearance.get();
+  nativeTheme.themeSource = theme;
+  window?.setBackgroundColor(theme === 'light' ? '#edf3fa' : '#0b1220');
+  if (process.platform === 'win32') window?.setTitleBarOverlay(titleBarColors());
+}
 const git = new GitService();
 const emit = (event: DesktopEvent) => { if (window && !window.isDestroyed()) window.webContents.send('pm:event', event); };
 const processes = new ProcessService(emit);
@@ -43,6 +56,13 @@ const serviceSchema = z.object({
 function publishProjects() { emit({ type: 'projects', projects: store.list() }); }
 type Handler = (payload: unknown) => unknown | Promise<unknown>;
 const handlers: Record<string, Handler> = {
+  'theme:get': () => appearance.get(),
+  'layout:sidebar:get': () => appearance.getSidebarCollapsed(),
+  'layout:sidebar:set': payload => appearance.saveSidebarCollapsed(z.object({ collapsed: z.boolean() }).parse(payload).collapsed),
+  'theme:set': async payload => {
+    const { theme } = z.object({ theme: z.enum(['dark', 'light']) }).parse(payload);
+    await appearance.save(theme); applyNativeTheme(); return theme;
+  },
   bootstrap: () => ({ projects: store.list(), runs: processes.runs(), version: app.getVersion(), platform: process.platform }),
   'project:import': async payload => {
     const input = z.object({ path: z.string().max(4096).optional() }).parse(payload);
@@ -149,7 +169,8 @@ async function createWindow() {
   const rendererUrl = process.env.AIPM_RENDERER_URL;
   if (!rendererUrl || new URL(rendererUrl).hostname !== '127.0.0.1') throw new Error('请使用 npm.cmd run dev:desktop 启动桌面客户端');
   window = new BrowserWindow({ width: 1440, height: 940, minWidth: 1000, minHeight: 680, show: false,
-    title: '项目工作台', backgroundColor: '#f1f4f8', autoHideMenuBar: true,
+    title: '项目工作台', backgroundColor: appearance.get() === 'light' ? '#edf3fa' : '#0b1220', autoHideMenuBar: true,
+    ...(process.platform === 'win32' ? { titleBarStyle: 'hidden' as const, titleBarOverlay: titleBarColors() } : {}),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-prevent-unload', event => {
@@ -180,6 +201,7 @@ app.on('second-instance', revealWindow);
 app.whenReady().then(async () => {
   if (!locked) return;
   store = new ProjectStore(app.getPath('userData')); await store.load();
+  appearance = new ThemeStore(app.getPath('userData')); await appearance.load(); applyNativeTheme();
   ipcMain.handle('pm:request', async (event, input: unknown) => {
     try {
       if (!window || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame) throw new Error('请求来源无效');

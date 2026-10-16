@@ -5,7 +5,10 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { request } from '@/api/desktop';
+import { useTheme } from '@/composables/useTheme';
+import { readTerminalTheme } from '@/config/terminalTheme';
 const props = defineProps<{ id: string; visible: boolean }>(); const ws = useWorkspace();
+const appearance = useTheme();
 const element = ref<HTMLElement>(); let terminal: Terminal; let observer: ResizeObserver; let unsubscribe: (() => void) | undefined;
 let frame: number | undefined; let mounted = false; let lastCols = 0; let lastRows = 0;
 function fit() {
@@ -23,11 +26,11 @@ function scheduleFit() {
 }
 const addon = new FitAddon();
 watch(() => props.visible, async value => { if (value) { await nextTick(); scheduleFit(); terminal?.focus(); } });
+watch(appearance.theme, () => { if (terminal) terminal.options.theme = readTerminalTheme(); }, { flush: 'post' });
 onMounted(() => {
   mounted = true;
   terminal = new Terminal({ cursorBlink: true, fontFamily: '"Cascadia Code", Consolas, monospace', fontSize: 13,
-    lineHeight: 1.25, scrollback: 3000, theme: { background: '#152131', foreground: '#d9e3ef', cursor: '#9cbaff',
-      black: '#253448', brightBlack: '#7a8da7', red: '#f29090', green: '#83c7a2', yellow: '#e0c085', blue: '#94b9ff', magenta: '#c6a2de', cyan: '#83c2d0', white: '#d9e3ef' } });
+    lineHeight: 1.25, scrollback: 3000, theme: readTerminalTheme() });
   terminal.loadAddon(addon);
   const firstRender = terminal.onRender(() => { scheduleFit(); firstRender.dispose(); });
   terminal.open(element.value!);

@@ -1,0 +1,28 @@
+.sidebar-header { display: flex; align-items: center; gap: 4px; min-height: 80px; flex-shrink: 0; padding: 0 12px; }
+.sidebar-header .brand { flex: 1; min-width: 0; height: 80px; gap: 10px; padding: 0 4px; }
+.sidebar-header .brand > span:last-child { min-width: 0; overflow: hidden; }
+.sidebar-header .brand strong, .sidebar-header .brand small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-header .brand-symbol { flex-shrink: 0; }
+.sidebar-toggle { width: 26px; height: 28px; border: 1px solid var(--line); background: var(--control); box-shadow: var(--glass-edge); }
+.sidebar-rail-tools { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; padding: 0 0 12px; margin: 0 8px 12px; border-bottom: 1px solid var(--line); }
+.sidebar-rail-tools .icon-button { width: 34px; height: 34px; }
+.sidebar-rail-tools .icon-button.active { color: var(--accent); background: var(--accent-soft); }
+.sidebar-rail-pagination { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; padding: 8px 0 0; color: var(--muted); font: 9px 'Cascadia Code', Consolas, monospace; }
+.sidebar-rail-pagination > div { display: flex; }
+.sidebar-rail-pagination .icon-button { width: 22px; height: 24px; }
+.app-shell.sidebar-collapsed { --sidebar-width: 60px; }
+.sidebar-collapsed .sidebar-header { min-height: 56px; justify-content: center; padding: 0; }
+.sidebar-collapsed .sidebar-header .brand { display: none; }
+.sidebar-collapsed .sidebar-toggle { width: 34px; height: 30px; }
+.sidebar-collapsed .project-list { padding: 0 6px; }
+.sidebar-collapsed .project-item { min-height: 42px; margin-bottom: 6px; }
+.sidebar-collapsed .project-link { justify-content: center; min-height: 40px; padding: 8px 0; }
+.sidebar-collapsed .project-link > span, .sidebar-collapsed .sidebar-label { display: none; }
+.sidebar-collapsed .sidebar-empty { padding: 10px 0; text-align: center; }
+.sidebar-collapsed .sidebar-add { gap: 4px; margin: 10px 8px 12px; padding-top: 10px; flex-shrink: 0; }
+.sidebar-collapsed .sidebar-add button { justify-content: center; min-height: 34px; padding: 8px 0; }
+.sidebar-collapsed .sidebar-bottom { padding: 10px 6px; flex-shrink: 0; }
+.sidebar-collapsed .sidebar-utilities { flex-direction: column; gap: 6px; }
+.sidebar-collapsed .sidebar-utilities > a { flex: none; justify-content: center; width: 34px; height: 34px; padding: 0; }
+.sidebar-collapsed .sidebar-utilities > a.active { color: var(--accent); background: var(--accent-soft); }
+.sidebar-collapsed .theme-toggle { width: 34px; height: 30px; }

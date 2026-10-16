@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('desktop', {
+  platform: process.platform,
   request: async (action, payload) => {
     const result = await ipcRenderer.invoke('pm:request', { action, payload });
     if (!result.ok) throw new Error(result.error);

@@ -7,13 +7,15 @@ import { bracketMatching, indentOnInput, indentUnit } from '@codemirror/language
 import AppIcon from '@/components/common/AppIcon.vue';
 import { codeLanguage } from '@/config/codeLanguages';
 import { loadEditorLanguage } from '@/config/editorLanguages';
-import { editorSyntax, editorTheme } from '@/config/editorTheme';
+import { editorSyntax, editorTheme, editorLightTheme } from '@/config/editorTheme';
+import { useTheme } from '@/composables/useTheme';
 
 const props = withDefaults(defineProps<{ modelValue: string; path: string; active?: boolean; dirty?: boolean; lineEnding?: string }>(), { active: true, dirty: false, lineEnding: 'LF' });
 const emit = defineEmits<{ 'update:modelValue': [value: string]; save: [] }>();
 const host = ref<HTMLElement>(); const language = computed(() => codeLanguage(props.path));
 const lines = ref(1); const cursorLine = ref(1); const cursorColumn = ref(1); const languageError = ref(false);
 const languageSlot = new Compartment(); const externalChange = Annotation.define<boolean>();
+const appearance = useTheme(); const appearanceSlot = new Compartment();
 let view: EditorView | undefined; let languageSequence = 0;
 
 async function configureLanguage() {
@@ -29,7 +31,7 @@ function updatePosition(state: EditorState) {
 }
 onMounted(() => {
   view = new EditorView({ parent: host.value!, state: EditorState.create({ doc: props.modelValue, extensions: [
-    editorTheme, editorSyntax, lineNumbers(), highlightActiveLineGutter(), highlightActiveLine(),
+    appearanceSlot.of(appearance.isDark.value ? editorTheme : editorLightTheme), editorSyntax, lineNumbers(), highlightActiveLineGutter(), highlightActiveLine(),
     history(), drawSelection(), dropCursor(), indentOnInput(), bracketMatching(), indentUnit.of('  '),
     languageSlot.of([]), EditorState.tabSize.of(2),
     EditorView.contentAttributes.of({ 'aria-label': '文件内容', spellcheck: 'false' }),
@@ -46,6 +48,7 @@ watch(() => props.modelValue, value => {
   if (view && value !== view.state.doc.toString()) view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: value }, annotations: externalChange.of(true) });
 });
 watch(() => props.path, configureLanguage);
+watch(appearance.theme, () => { view?.dispatch({ effects: appearanceSlot.reconfigure(appearance.isDark.value ? editorTheme : editorLightTheme) }); });
 watch(() => props.active, async active => { if (active) { await nextTick(); view?.requestMeasure(); view?.focus(); } });
 onBeforeUnmount(() => { languageSequence++; view?.destroy(); view = undefined; });
 </script>

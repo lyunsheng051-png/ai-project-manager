@@ -26,6 +26,7 @@ export interface GitStatus {
 export interface FileEntry { name: string; path: string; directory: boolean; size: number }
 export interface ImagePreviewData { dataUrl: string; mimeType: string; size: number }
 export interface AppMetrics { workingSetMb: number; cpu: number; processCount: number }
+export type ThemeMode = 'dark' | 'light';
 export interface Bootstrap { projects: Project[]; runs: ServiceRun[]; version: string; platform: string }
 export type DesktopEvent =
   | { type: 'service'; run: ServiceRun }
@@ -35,6 +36,10 @@ export type DesktopEvent =
   | { type: 'projects'; projects: Project[] };
 export interface ActionPayloads {
   bootstrap: undefined;
+  'theme:get': undefined;
+  'theme:set': { theme: ThemeMode };
+  'layout:sidebar:get': undefined;
+  'layout:sidebar:set': { collapsed: boolean };
   'project:import': { path?: string };
   'project:clone': { url: string; name: string };
   'project:activate': { projectId: string };
@@ -77,6 +82,10 @@ export interface ActionPayloads {
 }
 export interface ActionResults {
   bootstrap: Bootstrap;
+  'theme:get': ThemeMode;
+  'theme:set': ThemeMode;
+  'layout:sidebar:get': boolean;
+  'layout:sidebar:set': boolean;
   'project:import': Project | null; 'project:clone': Project | null;
   'project:activate': Project; 'project:favorite': Project; 'project:remove': void;
   'project:scan': Project;
@@ -94,6 +103,7 @@ export interface ActionResults {
 export type Action = keyof ActionPayloads;
 export type Request = <K extends Action>(action: K, payload: ActionPayloads[K]) => Promise<ActionResults[K]>;
 export interface DesktopBridge {
+  readonly platform?: string;
   request: Request;
   subscribe: (listener: (event: DesktopEvent) => void) => () => void;
 }
