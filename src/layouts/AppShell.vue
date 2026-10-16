@@ -8,6 +8,7 @@ import { useWorkspace } from '@/composables/useWorkspace';
 import { usePagination } from '@/composables/usePagination';
 import { request } from '@/api/desktop';
 import type { Project } from '@/types';
+import { confirmWorkspaceNavigation } from '@/composables/useUnsavedChanges';
 const ws = useWorkspace(); const route = useRoute(); const router = useRouter();
 const search = ref(''); const cloneOpen = ref(false); const favorites = ref(false);
 const removingId = ref('');
@@ -15,9 +16,15 @@ const filtered = computed(() => ws.projects.value.filter(p => (!favorites.value 
   && `${p.name} ${p.path}`.toLowerCase().includes(search.value.toLowerCase()))
   .sort((a, b) => Number(b.favorite) - Number(a.favorite) || b.lastOpened.localeCompare(a.lastOpened)));
 const pager = usePagination(() => filtered.value);
-async function choose(id: string) { const project = ws.projects.value.find(p => p.id === id); if (project) { await router.push('/'); await ws.activate(project); } }
+async function choose(id: string) {
+  const project = ws.projects.value.find(p => p.id === id);
+  if (!project) return;
+  if (route.path !== '/' && await router.push('/')) return;
+  await ws.activate(project);
+}
 async function favorite(id: string) { await ws.task('收藏项目', () => request('project:favorite', { projectId: id })); }
 async function remove(project: Project) {
+  if (project.id === ws.activeId.value && !confirmWorkspaceNavigation()) return;
   if (removingId.value || !confirm(`从工作台移除“${project.name}”？运行中的服务和终端将停止，磁盘文件会保留。`)) return;
   removingId.value = project.id;
   try {

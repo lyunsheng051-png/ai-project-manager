@@ -67,6 +67,7 @@ export interface ActionPayloads {
   'git:abort': { projectId: string };
   'files:list': { projectId: string; path: string };
   'files:read': { projectId: string; path: string };
+  'files:save': { projectId: string; path: string; content: string; original: string };
   'files:open': { projectId: string; path: string };
   'project:reveal': { projectId: string };
   'url:open': { url: string };
@@ -85,7 +86,7 @@ export interface ActionResults {
   'git:stage': string; 'git:unstage': string; 'git:commit': string;
   'git:create-branch': string; 'git:switch': string; 'git:fetch': string; 'git:pull': string;
   'git:push': string; 'git:merge': string; 'git:abort': string;
-  'files:list': FileEntry[]; 'files:read': string; 'files:open': void;
+  'files:list': FileEntry[]; 'files:read': string; 'files:save': string; 'files:open': void;
   'project:reveal': void; 'url:open': void; metrics: AppMetrics;
 }
 export type Action = keyof ActionPayloads;

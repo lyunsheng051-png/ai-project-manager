@@ -1,5 +1,6 @@
 import { computed, ref, shallowRef } from 'vue';
 import { request } from '@/api/desktop';
+import { confirmWorkspaceNavigation } from './useUnsavedChanges';
 import type { Project, ServiceRun, GitStatus, TerminalSession, AppMetrics, DesktopEvent } from '@/types';
 
 const projects = ref<Project[]>([]);
@@ -37,6 +38,7 @@ async function refreshGit() {
   } catch (error) { if (sequence === refreshSequence) { gitStatus.value = null; gitError.value = (error as Error).message; } }
 }
 async function activate(project: Project) {
+  if (project.id !== activeId.value && !confirmWorkspaceNavigation()) return;
   activeId.value = project.id; localStorage.setItem('active-project', project.id);
   gitStatus.value = null; gitError.value = ''; selectedService.value = project.services[0]?.id || '';
   selectedTerminal.value = terminals.value.find(t => t.projectId === project.id)?.id || '';

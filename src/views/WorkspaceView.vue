@@ -8,11 +8,13 @@ import FilePanel from '@/components/files/FilePanel.vue';
 import OutputDock from '@/components/terminal/OutputDock.vue';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { request } from '@/api/desktop';
+import { confirmWorkspaceNavigation } from '@/composables/useUnsavedChanges';
 const ws = useWorkspace(); const tab = ref<'services' | 'git' | 'files'>('services'); const cloneOpen = ref(false);
 const desktopMode = Boolean(window.desktop);
 const project = computed(() => ws.activeProject.value);
 const tabs = [{ key: 'services', label: '运行服务', icon: 'Layers' }, { key: 'git', label: 'Git 变更', icon: 'GitBranch' }, { key: 'files', label: '文件浏览', icon: 'Folder' }] as const;
 watch(ws.activeId, () => { tab.value = 'services'; });
+function selectTab(value: typeof tab.value) { if (value !== tab.value && confirmWorkspaceNavigation()) tab.value = value; }
 function focus() { if (project.value) void ws.refreshGit(); }
 onMounted(() => window.addEventListener('focus', focus)); onBeforeUnmount(() => window.removeEventListener('focus', focus));
 </script>
@@ -27,7 +29,7 @@ onMounted(() => window.addEventListener('focus', focus)); onBeforeUnmount(() => 
     <div v-if="!ws.ready.value" class="welcome-screen"><AppIcon name="Loader" :size="28" class="spin" /><p>加载工作空间…</p></div>
     <div v-else-if="!project" class="welcome-screen"><div class="welcome-art"><span /><span /><span /><AppIcon name="FolderOpen" :size="44" /></div><div class="eyebrow">YOUR LOCAL WORKSPACE</div><h1>让项目，随时就绪。</h1><p>导入代码仓库，管理服务、终端和 Git。<br />从一个项目开始，保持工作空间简单。</p><div class="welcome-actions"><button class="button primary" @click="ws.importProject"><AppIcon name="FolderPlus" />导入本地项目</button><button class="button" @click="cloneOpen = true"><AppIcon name="Download" />克隆 Git 仓库</button></div><div v-if="!desktopMode" class="preview-note">当前是界面预览。请在项目目录执行 <code>npm run dev</code>，使用桌面文件、Git和终端功能。</div><div class="welcome-footnote"><span><AppIcon name="Layers" />识别多服务</span><span><AppIcon name="Terminal" />项目终端</span><span><AppIcon name="GitBranch" />基础 Git</span></div></div>
     <template v-else>
-      <nav class="project-tabs" aria-label="项目功能"><button v-for="item in tabs" :key="item.key" :class="{ active: tab === item.key }" @click="tab = item.key"><AppIcon :name="item.icon" />{{ item.label }}<span v-if="item.key === 'git' && ws.gitStatus.value?.files.length">{{ ws.gitStatus.value.files.length }}</span></button></nav>
+      <nav class="project-tabs" aria-label="项目功能"><button v-for="item in tabs" :key="item.key" :class="{ active: tab === item.key }" @click="selectTab(item.key)"><AppIcon :name="item.icon" />{{ item.label }}<span v-if="item.key === 'git' && ws.gitStatus.value?.files.length">{{ ws.gitStatus.value.files.length }}</span></button></nav>
       <div class="workspace-content" :class="{ 'git-workspace': tab === 'git', 'file-workspace': tab === 'files' }"><ServicePanel v-if="tab === 'services'" :key="project.id" :project="project" /><GitPanel v-else-if="tab === 'git'" :key="project.id" :project="project" /><FilePanel v-else :key="project.id" :project="project" /></div>
     </template>
     <OutputDock :layout-key="tab" />

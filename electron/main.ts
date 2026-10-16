@@ -7,7 +7,7 @@ import { ProjectStore } from './repositories/project-store';
 import { scanProject, mergeScannedServices } from './services/scanner';
 import { GitService } from './services/git';
 import { ProcessService, orderServices } from './services/processes';
-import { listFiles, readTextFile } from './services/files';
+import { listFiles, readTextFile, saveTextFile } from './services/files';
 import { validateCloneName, withinProject } from './core/paths';
 import type { DesktopEvent, ServiceProfile } from '../shared/contracts';
 
@@ -116,6 +116,10 @@ const handlers: Record<string, Handler> = {
   },
   'files:list': payload => { const v = file.parse(payload); return listFiles(store.get(v.projectId).path, v.path); },
   'files:read': payload => { const v = file.parse(payload); return readTextFile(store.get(v.projectId).path, v.path); },
+  'files:save': payload => {
+    const v = file.extend({ content: z.string().max(1_000_000), original: z.string().max(1_000_000) }).parse(payload);
+    return saveTextFile(store.get(v.projectId).path, v.path, v.content, v.original);
+  },
   'files:open': async payload => {
     const v = file.parse(payload); const target = await withinProject(store.get(v.projectId).path, v.path);
     shell.showItemInFolder(target);
@@ -147,6 +151,11 @@ async function createWindow() {
     title: '项目工作台', backgroundColor: '#f1f4f8', autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  window.webContents.on('will-prevent-unload', event => {
+    const choice = dialog.showMessageBoxSync(window!, { type: 'question', title: '未保存的文件',
+      message: '有尚未保存的文件修改', detail: '离开后这些修改将丢失。', buttons: ['继续编辑', '放弃修改并离开'], defaultId: 0, cancelId: 0 });
+    if (choice === 1) event.preventDefault();
+  });
   window.webContents.on('will-navigate', (event, url) => { if (new URL(url).origin !== new URL(rendererUrl).origin) event.preventDefault(); });
   window.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   window.on('close', event => {

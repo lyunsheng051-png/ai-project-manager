@@ -11,6 +11,7 @@ import { prepareDesktop } from './desktop-runtime.mjs';
 import { verifyDockResize, verifyTerminalResize } from './desktop-checks/dock-resize.mjs';
 import { verifyGitFiles } from './desktop-checks/git-files.mjs';
 import { verifyWorkspaceLayout } from './desktop-checks/workspace-layout.mjs';
+import { verifyFileEditor } from './desktop-checks/file-editor.mjs';
 
 const require = createRequire(import.meta.url);
 const fixture = await mkdtemp(path.join(tmpdir(), 'aipm-desktop-'));
@@ -123,6 +124,7 @@ try {
   await page.getByRole('button', { name: /README.md/ }).click();
   await page.getByText('已修改内容。', { exact: false }).waitFor();
   await page.screenshot({ path: '.runtime/screenshots/files.png' });
+  await verifyFileEditor(page, repo, call, project.id);
   await assert.rejects(call('files:read', { projectId: project.id, path: '../outside.txt' }));
   const metrics = await call('metrics'); assert.ok(metrics.workingSetMb > 0);
   assert.deepEqual(failures, [], 'renderer errors');
