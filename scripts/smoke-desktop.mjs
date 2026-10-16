@@ -86,7 +86,7 @@ try {
   assert.equal(await fetch(`http://127.0.0.1:${apiPort}`, { signal: AbortSignal.timeout(1000) }).then(() => true, () => false), false);
   console.log('PASS occupied port protection and concurrent start cancellation');
   // 终端输入经由真实 PTY，再从事件缓冲检查回显。
-  await page.getByRole('button', { name: '打开终端', exact: true }).first().click();
+  await page.getByRole('region', { name: '输出与终端', exact: true }).getByRole('button', { name: '新建项目终端', exact: true }).click();
   await page.locator('.terminal-canvas').waitFor({ state: 'visible' });
   await verifyTerminalResize(page);
   const terminalId = await page.evaluate(async () => {

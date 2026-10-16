@@ -8,15 +8,11 @@ import FilePanel from '@/components/files/FilePanel.vue';
 import OutputDock from '@/components/terminal/OutputDock.vue';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { request } from '@/api/desktop';
-const ws = useWorkspace(); const tab = ref<'services' | 'git' | 'files'>('services'); const cloneOpen = ref(false); const menu = ref(false);
+const ws = useWorkspace(); const tab = ref<'services' | 'git' | 'files'>('services'); const cloneOpen = ref(false);
 const desktopMode = Boolean(window.desktop);
 const project = computed(() => ws.activeProject.value);
 const tabs = [{ key: 'services', label: '运行服务', icon: 'Layers' }, { key: 'git', label: 'Git 变更', icon: 'GitBranch' }, { key: 'files', label: '文件浏览', icon: 'Folder' }] as const;
-watch(ws.activeId, () => { tab.value = 'services'; menu.value = false; });
-async function remove() {
-  if (!project.value || !confirm(`从工作台移除“${project.value.name}”？运行中的服务和终端将停止，磁盘文件会保留。`)) return;
-  await ws.task('移除项目', () => request('project:remove', { projectId: project.value!.id })); menu.value = false;
-}
+watch(ws.activeId, () => { tab.value = 'services'; });
 function focus() { if (project.value) void ws.refreshGit(); }
 onMounted(() => window.addEventListener('focus', focus)); onBeforeUnmount(() => window.removeEventListener('focus', focus));
 </script>
@@ -25,7 +21,6 @@ onMounted(() => window.addEventListener('focus', focus)); onBeforeUnmount(() => 
     <header class="workspace-topbar">
       <template v-if="project">
         <div class="workspace-project"><h1 :title="project.name">{{ project.name }}</h1><span v-if="ws.gitStatus.value?.isRepository" class="branch-badge" :title="ws.gitStatus.value.branch"><AppIcon name="GitBranch" :size="13" /><span class="branch-name">{{ ws.gitStatus.value.branch }}</span><span v-if="ws.gitStatus.value.ahead" class="mono">↑{{ ws.gitStatus.value.ahead }}</span><span v-if="ws.gitStatus.value.behind" class="mono">↓{{ ws.gitStatus.value.behind }}</span></span><button class="project-path mono" :title="project.path" aria-label="打开项目文件夹" @click="ws.task('打开文件夹', () => request('project:reveal', { projectId: project!.id }))"><AppIcon name="FolderOpen" :size="13" /><span>{{ project.path }}</span></button></div>
-        <div class="workspace-actions"><button class="button small" @click="ws.newTerminal"><AppIcon name="Terminal" :size="14" />打开终端</button><div class="project-menu"><button class="icon-button" title="项目选项" aria-label="项目选项" @click="menu = !menu"><AppIcon name="Ellipsis" :size="19" /></button><div v-if="menu" class="popover-menu"><button @click="ws.task('打开文件夹', () => request('project:reveal', { projectId: project!.id })); menu = false"><AppIcon name="FolderOpen" />打开文件夹</button><button class="danger-text" @click="remove"><AppIcon name="Trash2" />移除项目记录</button></div></div></div>
       </template>
       <template v-else><span class="breadcrumb-caption"><AppIcon name="Command" :size="14" />本地工作空间</span><span class="topbar-hint"><span class="status-dot running" />{{ desktopMode ? '桌面工作台' : '浏览器预览' }}</span></template>
     </header>

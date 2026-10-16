@@ -14,10 +14,6 @@
 .empty-card p { color: #8a98aa; line-height: 1.8; max-width: 400px; font-size: 12px; margin-bottom: 20px; }
 .empty-symbol { display: grid; place-items: center; width: 55px; height: 55px; border-radius: 14px; background: #eef3fb; }
 .empty-inline { color: #8a98aa; text-align: center; padding: 28px 15px; font-size: 12px; }
-.project-menu { position: relative; }
-.popover-menu { position: absolute; right: 0; top: 36px; z-index: 5; width: 170px; background: #fff; border: 1px solid var(--line); border-radius: 7px; box-shadow: 0 10px 30px #1c30471a; padding: 5px; }
-.popover-menu button { width: 100%; display: flex; align-items: center; gap: 9px; text-align: left; padding: 9px; font-size: 12px; border-radius: 4px; }
-.popover-menu button:hover { background: var(--surface-subtle); }
 .modal-backdrop { position: fixed; inset: 0; background: #10223b61; backdrop-filter: blur(3px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 30px; }
 .modal { width: 580px; max-width: 100%; max-height: 90vh; overflow: auto; background: #fff; border-radius: 11px; box-shadow: 0 25px 100px #0c1d3340; border: 1px solid #ffffff70; }
 .modal.wide { width: 800px; }
