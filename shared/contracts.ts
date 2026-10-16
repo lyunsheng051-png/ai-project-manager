@@ -24,6 +24,7 @@ export interface GitStatus {
   files: GitFile[]; merging: boolean;
 }
 export interface FileEntry { name: string; path: string; directory: boolean; size: number }
+export interface ImagePreviewData { dataUrl: string; mimeType: string; size: number }
 export interface AppMetrics { workingSetMb: number; cpu: number; processCount: number }
 export interface Bootstrap { projects: Project[]; runs: ServiceRun[]; version: string; platform: string }
 export type DesktopEvent =
@@ -67,6 +68,7 @@ export interface ActionPayloads {
   'git:abort': { projectId: string };
   'files:list': { projectId: string; path: string };
   'files:read': { projectId: string; path: string };
+  'files:image': { projectId: string; path: string };
   'files:save': { projectId: string; path: string; content: string; original: string };
   'files:open': { projectId: string; path: string };
   'project:reveal': { projectId: string };
@@ -86,7 +88,7 @@ export interface ActionResults {
   'git:stage': string; 'git:unstage': string; 'git:commit': string;
   'git:create-branch': string; 'git:switch': string; 'git:fetch': string; 'git:pull': string;
   'git:push': string; 'git:merge': string; 'git:abort': string;
-  'files:list': FileEntry[]; 'files:read': string; 'files:save': string; 'files:open': void;
+  'files:list': FileEntry[]; 'files:read': string; 'files:image': ImagePreviewData; 'files:save': string; 'files:open': void;
   'project:reveal': void; 'url:open': void; metrics: AppMetrics;
 }
 export type Action = keyof ActionPayloads;

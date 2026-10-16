@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, readFile, readdir, symlink, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { readTextFile, saveTextFile } from '../electron/services/files';
+import { readTextFile, saveTextFile, readImageFile } from '../electron/services/files';
 
 const fixture = () => mkdtemp(path.join(tmpdir(), 'aipm-editor-'));
 
@@ -59,4 +59,32 @@ test('保存拒绝越过项目边界的路径和 junction', async () => {
   await assert.rejects(saveTextFile(root, 'linked/file.txt', 'draft', 'outside'), /只能访问/);
   await assert.rejects(saveTextFile(root, path.join(outside, 'file.txt'), 'draft', 'outside'), /只能访问/);
   assert.equal(await readFile(path.join(outside, 'file.txt'), 'utf8'), 'outside');
+});
+
+test('图片返回有明确 MIME 的预览数据，SVG 与光栅图片都禁止保存', async () => {
+  const root = await fixture();
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=', 'base64');
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="32"><rect width="64" height="32" fill="red"/></svg>';
+  await writeFile(path.join(root, 'pixel.PNG'), png); await writeFile(path.join(root, 'drawing.svg'), svg);
+  const preview = await readImageFile(root, 'pixel.PNG');
+  assert.equal(preview.mimeType, 'image/png'); assert.equal(preview.size, png.length);
+  assert.deepEqual(Buffer.from(preview.dataUrl.split(',')[1]!, 'base64'), png);
+  assert.equal((await readImageFile(root, 'drawing.svg')).mimeType, 'image/svg+xml');
+  await assert.rejects(saveTextFile(root, 'drawing.svg', '<svg/>', svg), /图片仅支持预览/);
+  await assert.rejects(saveTextFile(root, 'pixel.PNG', '', ''), /图片仅支持预览/);
+  assert.equal(await readFile(path.join(root, 'drawing.svg'), 'utf8'), svg);
+});
+
+test('图片预览拒绝越界、错误格式及超大文件', async () => {
+  const root = await fixture(); const outside = await fixture();
+  await writeFile(path.join(root, 'fake.png'), '<html>not an image</html>');
+  await writeFile(path.join(root, 'file.constructor'), 'text');
+  await writeFile(path.join(root, 'large.png'), Buffer.alloc(20_000_001));
+  await writeFile(path.join(outside, 'secret.png'), 'outside');
+  await symlink(outside, path.join(root, 'linked'), process.platform === 'win32' ? 'junction' : 'dir');
+  await assert.rejects(readImageFile(root, 'fake.png'), /内容与格式不符/);
+  await assert.rejects(readImageFile(root, 'file.constructor'), /不支持此图片格式/);
+  await assert.rejects(readImageFile(root, 'large.png'), /20 MB/);
+  await assert.rejects(readImageFile(root, 'linked/secret.png'), /只能访问/);
+  await assert.rejects(readImageFile(root, path.join(outside, 'secret.png')), /只能访问/);
 });

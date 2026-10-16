@@ -1,6 +1,6 @@
-.service-toolbar, .file-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 32px; margin-bottom: 10px; flex-shrink: 0; }
+.service-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 32px; margin-bottom: 10px; flex-shrink: 0; }
 .service-toolbar > .button-group { gap: 6px; }
-.service-toolbar .button, .service-toolbar .text-button, .file-toolbar .button { font-size: 11px; }
+.service-toolbar .button, .service-toolbar .text-button { font-size: 11px; }
 .run-summary { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #8997aa; }
 .service-list { display: flex; flex-direction: column; gap: 10px; }
 .service-card { display: flex; align-items: center; position: relative; padding: 18px 17px 18px 0; background: #fff; border: 1px solid #dce4ef; border-radius: 8px; min-height: 108px; box-shadow: 0 2px 4px #1c304703; gap: 15px; }
@@ -46,6 +46,7 @@
 .git-sync-actions .git-push { color: var(--accent); background: var(--accent-soft); }
 .git-sync-actions .git-push:not(:disabled):hover { color: #2859b2; background: #e0eaff; }
 .git-columns, .file-columns { display: grid; grid-template-columns: minmax(270px, 34%) minmax(0, 1fr); flex: 1; min-height: 0; border: 1px solid var(--line); border-radius: 6px; background: #fff; overflow: hidden; }
+.file-columns { grid-template-columns: minmax(240px, 26%) minmax(0, 1fr); }
 .git-workspace, .file-workspace { display: flex; flex-direction: column; min-height: 260px; overflow: hidden; }
 .git-panel, .file-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .git-panel > .warning-banner { flex-shrink: 0; }
@@ -105,24 +106,27 @@
 .branch-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #edf0f5; color: #6c82a0; }
 .branch-row > .mono { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
 .branch-row small { display: block; margin-top: 5px; font-size: 10px; color: #9ca9ba; }
-.breadcrumbs { display: flex; align-items: center; gap: 7px; min-width: 0; color: #a5b2c2; overflow-x: auto; }
-.breadcrumbs button { display: flex; align-items: center; gap: 7px; color: #6c82a0; font-size: 11px; white-space: nowrap; }
-.file-row { width: 100%; display: flex; align-items: center; gap: 9px; padding: 11px 13px; border-bottom: 1px solid #f0f3f7; text-align: left; font-size: 11px; color: #7e8fa6; }
-.file-row > span { color: #526984; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.file-row small { margin-left: auto; font: 9px 'Cascadia Code', Consolas, monospace; color: #9fabbc; white-space: nowrap; }
-.file-row:hover, .file-row.selected { background: #f0f5ff; }
-.file-row .folder-icon { color: #a68b5e; }
-.file-list { flex: 1; min-height: 0; overflow: auto; }
-.file-list-column > .pagination { flex-shrink: 0; border-top: 1px solid var(--line); }
-.file-content { flex: 1; min-height: 0; padding: 14px; overflow: auto; font-size: 12px; line-height: 1.8; color: #53647c; }
+.file-tree-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.file-tree-toolbar { height: 35px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 8px 0 12px; background: #f9fbfd; border-bottom: 1px solid var(--line); }
+.file-tree-toolbar > span { font-size: 11px; font-weight: 500; color: #71839c; }
+.file-tree-toolbar > div { display: flex; align-items: center; gap: 2px; }
+.file-tree { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 4px 0; }
+.file-tree-row { width: 100%; min-height: 29px; display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; color: #526984; text-align: left; font-size: 12px; }
+.file-tree-row:hover { background: #f4f7fb; }
+.file-tree-row.selected { background: #eaf1fe; color: #315ea1; box-shadow: inset 2px 0 #7199d7; }
+.file-tree-row:focus-visible { outline-offset: -2px; }
+.file-tree-row.root { font-weight: 550; }
+.tree-chevron { color: #8c9db3; }
+.tree-chevron-placeholder { width: 12px; flex-shrink: 0; }
+.tree-folder-icon { color: #ac8b50; }
+.tree-file-icon { color: #8499b7; }
+.tree-entry-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-tree-row small { flex-shrink: 0; margin-left: auto; color: #a0aec0; font: 9px 'Cascadia Code', Consolas, monospace; }
+.tree-note { flex-shrink: 0; color: #a0aec0; font-size: 10px; font-weight: 400; }
+.file-tree-row.has-error .tree-note { color: #ad7442; }
 .file-editor-header { flex-wrap: wrap; gap: 4px 10px; }
 .file-editor-actions { display: flex; align-items: center; gap: 3px; margin-left: auto; }
 .unsaved-badge { flex-shrink: 0; border-radius: 3px; background: #fff3db; color: #997025; padding: 2px 5px; font-size: 10px; font-weight: 400; }
-.file-editor { flex: 1; min-width: 0; min-height: 0; width: 100%; padding: 14px; resize: none; border: 0; border-radius: 0; outline: none; background: #fff; color: #344b68; font: 12px/1.8 'Cascadia Code', Consolas, monospace; tab-size: 2; }
-.file-editor:focus { box-shadow: inset 2px 0 #8faee0; }
-.file-editor-status { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; min-height: 25px; padding: 3px 11px; border-top: 1px solid #edf1f6; background: #f9fbfd; color: #8a99ae; font-size: 10px; }
-.file-editor-status > span:first-child { display: flex; align-items: center; gap: 7px; }
-.file-editor-status > span > span { color: #bdc7d5; }
 .file-read-error { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; color: #997545; font-size: 12px; line-height: 1.8; text-align: center; }
 .output-dock { position: relative; flex-shrink: 0; height: 220px; display: flex; flex-direction: column; border-top: 1px solid #ced8e5; background: var(--terminal); }
 .output-dock.collapsed { height: 38px; }

@@ -12,6 +12,8 @@ import { verifyDockResize, verifyTerminalResize } from './desktop-checks/dock-re
 import { verifyGitFiles } from './desktop-checks/git-files.mjs';
 import { verifyWorkspaceLayout } from './desktop-checks/workspace-layout.mjs';
 import { verifyFileEditor } from './desktop-checks/file-editor.mjs';
+import { verifyFileTree } from './desktop-checks/file-tree.mjs';
+import { verifyFilePreviews } from './desktop-checks/file-previews.mjs';
 
 const require = createRequire(import.meta.url);
 const fixture = await mkdtemp(path.join(tmpdir(), 'aipm-desktop-'));
@@ -121,10 +123,12 @@ try {
   console.log('PASS Git stage, commit and branch');
   await page.screenshot({ path: '.runtime/screenshots/git.png' });
   await page.getByRole('button', { name: '文件浏览', exact: true }).click();
-  await page.getByRole('button', { name: /README.md/ }).click();
+  await page.getByRole('treeitem', { name: 'README.md', exact: true }).click();
   await page.getByText('已修改内容。', { exact: false }).waitFor();
   await page.screenshot({ path: '.runtime/screenshots/files.png' });
+  await verifyFileTree(page, repo, application);
   await verifyFileEditor(page, repo, call, project.id);
+  await verifyFilePreviews(page, repo, call, project.id, application);
   await assert.rejects(call('files:read', { projectId: project.id, path: '../outside.txt' }));
   const metrics = await call('metrics'); assert.ok(metrics.workingSetMb > 0);
   assert.deepEqual(failures, [], 'renderer errors');

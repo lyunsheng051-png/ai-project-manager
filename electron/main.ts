@@ -7,7 +7,7 @@ import { ProjectStore } from './repositories/project-store';
 import { scanProject, mergeScannedServices } from './services/scanner';
 import { GitService } from './services/git';
 import { ProcessService, orderServices } from './services/processes';
-import { listFiles, readTextFile, saveTextFile } from './services/files';
+import { listFiles, readTextFile, saveTextFile, readImageFile } from './services/files';
 import { validateCloneName, withinProject } from './core/paths';
 import type { DesktopEvent, ServiceProfile } from '../shared/contracts';
 
@@ -116,6 +116,7 @@ const handlers: Record<string, Handler> = {
   },
   'files:list': payload => { const v = file.parse(payload); return listFiles(store.get(v.projectId).path, v.path); },
   'files:read': payload => { const v = file.parse(payload); return readTextFile(store.get(v.projectId).path, v.path); },
+  'files:image': payload => { const v = file.parse(payload); return readImageFile(store.get(v.projectId).path, v.path); },
   'files:save': payload => {
     const v = file.extend({ content: z.string().max(1_000_000), original: z.string().max(1_000_000) }).parse(payload);
     return saveTextFile(store.get(v.projectId).path, v.path, v.content, v.original);
