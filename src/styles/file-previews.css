@@ -4,6 +4,13 @@
 .tree-entry-name.git-modified, .change-row.git-modified .mono, .change-row.git-modified .file-status { color: #356fc1; }
 .change-row.git-normal .file-status { color: #718095; }
 
+.file-columns { grid-template-rows: minmax(0, 1fr); }
+.file-columns > .file-list-column { border: 0; }
+.file-split-resizer { position: relative; z-index: 2; cursor: ew-resize; touch-action: none; outline: none; background: #e0e6ef; }
+.file-split-resizer::after { content: ''; position: absolute; inset: 0 1px; background: transparent; transition: background .12s; }
+.file-split-resizer:hover::after, .file-split-resizer:focus-visible::after, .is-resizing-files .file-split-resizer::after { background: var(--accent); }
+.resizing-file-split, .resizing-file-split * { cursor: ew-resize !important; user-select: none !important; }
+
 .file-tabs { display: flex; align-items: stretch; flex-shrink: 0; min-height: 35px; overflow-x: auto; background: #25262a; border-bottom: 1px solid #34363b; }
 .file-tab { display: flex; align-items: center; flex-shrink: 0; max-width: 240px; padding-right: 5px; border-top: 2px solid transparent; border-right: 1px solid #34363b; color: #9399a5; }
 .file-tab.active { color: #d0d5de; background: #1e1f22; border-top-color: #709be1; }
@@ -12,6 +19,13 @@
 .file-tab-close { display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; padding: 0; color: #969da9; border-radius: 4px; }
 .file-tab-close:not(:disabled):hover { background: #3a3d44; color: #e2e7ef; }
 .file-tab-dirty { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: #dfb66e; }
+.file-editor-header.has-document { min-height: 32px; background: #25262a; border-bottom-color: #34363b; color: #a9b1bf; }
+.file-editor-header.has-document .pane-title > svg { flex-shrink: 0; color: #9399a5; }
+.file-editor-header.has-document .pane-title { flex: 1; }
+.file-editor-header.has-document .pane-action { color: #a9b1bf; }
+.file-editor-header.has-document .pane-action:not(:disabled):hover { background: #3a3d44; color: #e2e7ef; }
+.file-editor-header.has-document .pane-action:disabled { color: #626874; }
+.file-editor-header.has-document .unsaved-badge { background: #423925; color: #dfb66e; }
 .file-saving-hint { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: #7e91ac; }
 .file-document { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
 .code-editor { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; background: #1e1f22; }

@@ -6,12 +6,16 @@ import CodeEditor from './CodeEditor.vue';
 import ImagePreview from './ImagePreview.vue';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { useFileTabs, isDocumentDirty } from '@/composables/useFileTabs';
+import { useFileSplitResize } from '@/composables/useFileSplitResize';
 import { request } from '@/api/desktop';
 import type { Project } from '@/types';
 
 const props = withDefaults(defineProps<{ project: Project; visible?: boolean }>(), { visible: true });
 const ws = useWorkspace(); const tabs = useFileTabs(props.project.id);
 const tabBar = ref<HTMLElement>();
+const columns = ref<HTMLElement>();
+const split = useFileSplitResize(columns);
+watch(() => props.visible, visible => { if (!visible) split.finish(); });
 watch(tabs.activePath, async () => {
   await nextTick(); tabBar.value?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 });
@@ -26,8 +30,9 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', shortcut); window.
 </script>
 <template>
   <section class="file-panel">
-    <div class="file-columns">
-      <div class="file-list-column"><FileTree :project="project" :selected-path="tabs.activePath.value" @select="tabs.open" /></div>
+    <div ref="columns" class="file-columns" :class="{ 'is-resizing-files': split.dragging.value }" :style="{ gridTemplateColumns: `${split.width.value}px 5px minmax(0, 1fr)` }">
+      <div :id="`file-tree-${project.id}`" class="file-list-column"><FileTree :project="project" :selected-path="tabs.activePath.value" @select="tabs.open" /></div>
+      <div class="file-split-resizer" role="separator" aria-orientation="vertical" aria-label="调整文件目录宽度" :aria-controls="`file-tree-${project.id}`" :aria-valuemin="Math.round(split.minWidth.value)" :aria-valuemax="Math.round(split.maxWidth.value)" :aria-valuenow="split.width.value" tabindex="0" title="左右拖动调整宽度，双击恢复默认" @pointerdown="split.start" @pointermove="split.move" @pointerup="split.finish" @pointercancel="split.finish" @lostpointercapture="split.finish" @keydown="split.keydown" @dblclick="split.reset" />
       <div class="file-preview">
         <div v-if="tabs.documents.value.length" ref="tabBar" class="file-tabs" role="tablist" aria-label="打开的文件">
           <div v-for="document in tabs.documents.value" :key="document.id" class="file-tab" :class="{ active: document.entry.path === tabs.activePath.value }">
@@ -35,7 +40,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', shortcut); window.
             <button class="file-tab-close" :aria-label="`关闭文件 ${document.entry.path}`" :disabled="document.saving" title="关闭文件" @click="tabs.close(document)"><AppIcon name="X" :size="12" /></button>
           </div>
         </div>
-        <div class="diff-header file-editor-header">
+        <div class="diff-header file-editor-header" :class="{ 'has-document': tabs.active.value }">
           <div class="pane-title"><AppIcon :name="tabs.active.value?.kind === 'image' ? 'Image' : 'FileText'" :size="14" /><span :class="{ mono: tabs.active.value }" :title="tabs.active.value?.entry.path">{{ tabs.active.value?.entry.path || '文件编辑器' }}</span><span v-if="tabs.active.value && isDocumentDirty(tabs.active.value)" class="unsaved-badge">未保存</span></div>
           <div v-if="tabs.active.value" class="file-editor-actions">
             <span v-if="tabs.active.value.saving" class="file-saving-hint"><AppIcon name="Loader" :size="13" class="spin" />保存中…</span>

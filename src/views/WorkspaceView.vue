@@ -12,7 +12,7 @@ const ws = useWorkspace(); const tab = ref<'services' | 'git' | 'files'>('servic
 const desktopMode = Boolean(window.desktop);
 const project = computed(() => ws.activeProject.value);
 const filesOpened = ref(false);
-const tabs = [{ key: 'services', label: '运行服务', icon: 'Layers' }, { key: 'git', label: 'Git 变更', icon: 'GitBranch' }, { key: 'files', label: '文件浏览', icon: 'Folder' }] as const;
+const tabs = [{ key: 'services', label: '运行服务', icon: 'Layers' }, { key: 'files', label: '文件浏览', icon: 'Folder' }, { key: 'git', label: 'Git 变更', icon: 'GitBranch' }] as const;
 watch(ws.activeId, () => { tab.value = 'services'; filesOpened.value = false; });
 function selectTab(value: typeof tab.value) { if (value === 'files') filesOpened.value = true; tab.value = value; }
 function focus() { if (project.value) void ws.refreshGit(); }
