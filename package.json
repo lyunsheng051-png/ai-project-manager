@@ -1,0 +1,44 @@
+{
+  "name": "ai-project-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "面向 AI 辅助开发的本地项目工作台",
+  "license": "MIT",
+  "type": "module",
+  "main": ".runtime/main.cjs",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "desktop": "node scripts/dev.mjs",
+    "dev:desktop": "node scripts/dev.mjs",
+    "dev:web": "vite --host 127.0.0.1",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.desktop.json",
+    "test": "tsx --test tests/*.test.ts",
+    "test:desktop": "node scripts/smoke-desktop.mjs",
+    "test:desktop:launch": "node scripts/smoke-launcher.mjs"
+  },
+  "dependencies": {
+    "@lucide/vue": "^1.57.0",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "node-pty": "^1.1.0",
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "electron": "^44.8.0",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.64.1",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.4",
+    "vue-tsc": "^3.3.13"
+  },
+  "allowScripts": {
+    "node-pty@1.1.0": true,
+    "esbuild@0.28.2": true,
+    "electron@44.8.0": true
+  }
+}
