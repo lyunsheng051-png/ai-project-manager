@@ -2,7 +2,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Ref } 
 
 const STORAGE_KEY = 'output-dock-height';
 const MIN_HEIGHT = 160;
-const defaultHeight = () => window.innerHeight <= 800 ? 225 : 275;
+const defaultHeight = () => window.innerHeight <= 800 ? 180 : 220;
 function storedHeight() {
   try {
     const value = Number(localStorage.getItem(STORAGE_KEY));

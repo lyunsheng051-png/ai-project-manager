@@ -5,9 +5,10 @@ import TerminalPane from './TerminalPane.vue';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { request } from '@/api/desktop';
 import { useDockResize } from '@/composables/useDockResize';
+const props = defineProps<{ layoutKey?: string }>();
 const ws = useWorkspace(); const output = ref(''); const filter = ref(''); const autoScroll = ref(true); const logElement = ref<HTMLElement>();
 const dock = ref<HTMLElement>(); const resize = useDockResize(dock, ws.dockOpen);
-watch(ws.activeId, async () => { await nextTick(); resize.measure(); });
+watch([ws.activeId, () => props.layoutKey], async () => { await nextTick(); resize.measure(); });
 let unsubscribe: (() => void) | undefined; let pending = ''; let flushTimer: ReturnType<typeof setTimeout> | undefined; let generation = 0;
 const projectTerminals = computed(() => ws.terminals.value.filter(t => t.projectId === ws.activeId.value));
 const visibleOutput = computed(() => {

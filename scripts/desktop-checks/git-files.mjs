@@ -38,5 +38,6 @@ export async function verifyGitFiles(page, root, call, projectId) {
   await page.waitForFunction(count => document.querySelectorAll('.staged-indicator').length === count, names.length + 1);
   const status = await call('git:status', { projectId });
   assert.equal(status.files.length, names.length + 1); assert.equal(status.files.every(f => f.staged), true);
+  assert.ok((await page.getByText('已暂存所选文件', { exact: true }).last().boundingBox()).height < 70, 'successful bulk operation must not cover the workspace with raw Git output');
   console.log('PASS nested Git files, ignore rules, mouse wheel scrolling, preview, selective staging, unstage and select all without pagination');
 }

@@ -10,6 +10,7 @@ import { createServer as createHttpServer } from 'node:net';
 import { prepareDesktop } from './desktop-runtime.mjs';
 import { verifyDockResize, verifyTerminalResize } from './desktop-checks/dock-resize.mjs';
 import { verifyGitFiles } from './desktop-checks/git-files.mjs';
+import { verifyWorkspaceLayout } from './desktop-checks/workspace-layout.mjs';
 
 const require = createRequire(import.meta.url);
 const fixture = await mkdtemp(path.join(tmpdir(), 'aipm-desktop-'));
@@ -106,6 +107,7 @@ try {
   console.log('PASS PTY input, resize and exit');
   await writeFile(path.join(repo, 'README.md'), '# 示例项目\n\n已修改内容。\n');
   await verifyGitFiles(page, repo, call, project.id);
+  await verifyWorkspaceLayout(page, application);
   await page.getByLabel('提交说明', { exact: false }).fill('test: desktop flow');
   await page.getByRole('button', { name: '提交已暂存修改', exact: true }).click();
   await page.getByText('工作区干净', { exact: true }).waitFor();
