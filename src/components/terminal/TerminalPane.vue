@@ -29,7 +29,7 @@ watch(() => props.visible, async value => { if (value) { await nextTick(); sched
 watch(appearance.theme, () => { if (terminal) terminal.options.theme = readTerminalTheme(); }, { flush: 'post' });
 onMounted(() => {
   mounted = true;
-  terminal = new Terminal({ cursorBlink: true, fontFamily: '"Cascadia Code", Consolas, monospace', fontSize: 13,
+  terminal = new Terminal({ cursorBlink: true, allowTransparency: true, fontFamily: '"Cascadia Code", Consolas, monospace', fontSize: 13,
     lineHeight: 1.25, scrollback: 3000, theme: readTerminalTheme() });
   terminal.loadAddon(addon);
   const firstRender = terminal.onRender(() => { scheduleFit(); firstRender.dispose(); });

@@ -4,7 +4,7 @@ export function readTerminalTheme(): ITheme {
   const palette = getComputedStyle(document.documentElement);
   const color = (name: string) => palette.getPropertyValue(`--${name}`).trim();
   return {
-    background: color('terminal'), foreground: color('ink'), cursor: color('accent'), cursorAccent: color('terminal'),
+    background: '#00000000', foreground: color('ink'), cursor: color('accent'), cursorAccent: color('terminal'),
     selectionBackground: color('editor-selection'), selectionForeground: color('selection-ink'),
     black: color('ansi-black'), red: color('ansi-red'), green: color('ansi-green'), yellow: color('ansi-yellow'),
     blue: color('ansi-blue'), magenta: color('ansi-magenta'), cyan: color('ansi-cyan'), white: color('ansi-white'),

@@ -3,6 +3,7 @@
 .tree-entry-name.git-staged, .change-row.git-staged .mono, .change-row.git-staged .file-status { color: var(--success); }
 .tree-entry-name.git-modified, .change-row.git-modified .mono, .change-row.git-modified .file-status { color: var(--accent); }
 .change-row.git-normal .file-status { color: var(--muted); }
+.tree-entry-name.git-deleted, .change-row.git-deleted .mono, .change-row.git-deleted .file-status, .change-row.git-deleted .staged-indicator { color: var(--git-deleted); }
 
 .tree-file-icon[data-file-tone='code'] { color: var(--accent); }
 .tree-file-icon[data-file-tone='config'] { color: var(--warning); }

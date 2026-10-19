@@ -3,7 +3,7 @@ html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body {
   background:
     var(--wallpaper-shade),
-    url('../assets/liquid-wallpaper.svg') center / cover no-repeat,
+    var(--wallpaper-background),
     var(--canvas);
   background-attachment: fixed;
   color: var(--ink);

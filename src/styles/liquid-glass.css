@@ -1,10 +1,11 @@
-/* Liquid material treatment. Editing surfaces keep their own solid colors. */
+/* Liquid material treatment. The code editor keeps its own solid reading surface. */
 .sidebar,
 .main-shell {
+  position: relative;
   border-color: var(--liquid-border);
   background: var(--liquid-sheen), var(--main-glass);
   box-shadow: var(--glass-edge), var(--panel-shadow);
-  backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(8px) saturate(135%);
 }
 .sidebar { background: var(--liquid-sheen), var(--sidebar); }
 .app-titlebar { background: var(--titlebar); border-bottom-color: var(--liquid-border); }
@@ -23,9 +24,9 @@
 .sidebar-filters { gap: 3px; margin: 14px 14px 11px; padding: 3px; border: 1px solid var(--liquid-border); border-radius: var(--radius-pill); background: var(--glass); box-shadow: var(--glass-edge); }
 .sidebar-filters button { justify-content: center; flex: 1; padding: 5px 9px; border: 0; border-radius: var(--radius-pill); }
 .sidebar-filters button.active { color: var(--ink); background: var(--liquid-selected); box-shadow: var(--glass-edge), var(--liquid-shadow); font-weight: 600; }
-.project-item { background: var(--card-sheen), var(--card-glass); border-color: var(--card-border); box-shadow: var(--card-edge), 0 5px 14px #081b311a; backdrop-filter: blur(6px) saturate(125%); }
-.project-item.selected { background: var(--card-sheen), var(--card-selected); border-color: var(--accent-outline); box-shadow: var(--card-edge), var(--liquid-shadow); }
-.project-item:not(.selected):hover { background: var(--card-sheen), var(--card-hover); border-color: var(--card-border); }
+.project-item { background: var(--card-sheen), var(--card-glass); border-color: transparent; box-shadow: var(--lens-shadow); backdrop-filter: blur(12px) saturate(145%) contrast(1.04); }
+.project-item.selected { background: var(--card-sheen), var(--card-selected); border-color: var(--accent-line); box-shadow: var(--lens-shadow), 0 0 0 1px var(--focus-halo); }
+.project-item:not(.selected):hover { background: var(--card-sheen), var(--card-hover); border-color: transparent; }
 .project-identity { border-radius: 10px; border-color: var(--liquid-border); }
 .project-record-actions button { border-radius: 50%; }
 .sidebar-add { border-top-color: var(--liquid-border); }
@@ -35,6 +36,7 @@
 
 /* A floating capsule keeps the navigation distinct from the document surface. */
 .project-tabs {
+  position: relative;
   align-self: flex-start;
   width: max-content;
   max-width: calc(100% - 32px);
@@ -72,8 +74,8 @@
 .branch-badge { background: var(--liquid-sheen), var(--control); border-color: var(--liquid-border); }
 input:not([type='checkbox']):not([type='radio']), textarea, select { border-color: var(--line-strong); }
 
-.service-card { background: var(--card-sheen), var(--card-glass); border-color: var(--card-border); box-shadow: var(--card-edge), var(--panel-shadow); backdrop-filter: blur(6px) saturate(125%); }
-.service-card:hover { background: var(--card-sheen), var(--card-hover); border-color: var(--card-border); box-shadow: var(--card-edge), var(--liquid-shadow); }
+.service-card { background: var(--card-sheen), var(--card-glass); border-color: transparent; box-shadow: var(--lens-shadow); backdrop-filter: blur(12px) saturate(145%) contrast(1.04); }
+.service-card:hover { background: var(--card-sheen), var(--card-hover); border-color: transparent; box-shadow: var(--lens-shadow); }
 .service-card.is-running { border-color: var(--success-line); }
 .service-rail { border-right-color: var(--liquid-border); }
 .service-rail::before { left: 5px; }
@@ -98,12 +100,28 @@ input:not([type='checkbox']):not([type='radio']), textarea, select { border-colo
 .file-tabs, .file-editor-header.has-document, .code-editor-status, .image-preview-toolbar, .image-preview-status { background: var(--editor-chrome); }
 .file-tab-close { border-radius: 50%; }
 
-.output-dock { border-top-color: var(--liquid-border); }
-.dock-header { padding-left: 14px; background: var(--liquid-sheen), var(--panel-chrome); }
+.output-dock { border-top-color: var(--liquid-border); background: var(--dock-glass); box-shadow: var(--glass-edge); backdrop-filter: blur(12px) saturate(120%); }
+.dock-header { padding-left: 14px; background: var(--dock-chrome); border-bottom-color: var(--line); }
 .dock-tabs { gap: 4px; padding: 4px 0; }
 .dock-tabs > button { gap: 6px; padding: 0 10px; border: 0; border-radius: var(--radius-pill); }
 .dock-tabs > button.active { background: var(--liquid-selected); color: var(--accent); box-shadow: var(--glass-edge), 0 2px 6px #06152814; }
-.settings-card, .empty-card { background: var(--card-sheen), var(--card-glass); border-color: var(--card-border); box-shadow: var(--card-edge), var(--panel-shadow); backdrop-filter: blur(6px) saturate(125%); }
+.dock-body, .logs-pane, .terminals-pane, .terminal-host { background: transparent; }
+.log-toolbar { background: var(--dock-chrome); border-bottom-color: var(--line); }
+.log-toolbar select { background: var(--dock-field); border-color: var(--line); border-radius: var(--radius-pill); color: var(--ink); }
+.log-filter { min-width: 0; }
+.log-filter input { min-width: 0; background: transparent; color: var(--ink); }
+.log-content { background: transparent; color: var(--ink); }
+.output-empty { color: var(--secondary); }
+.output-empty > svg { color: var(--accent); }
+.terminal-tabbar { gap: 4px; padding: 3px 10px; min-height: 34px; height: 34px; background: var(--dock-chrome); border-bottom-color: var(--line); }
+.terminal-tab { padding: 0 4px 0 7px; border: 0; border-radius: var(--radius-pill); color: var(--secondary); }
+.terminal-tab.active { color: var(--accent); background: var(--card-selected); box-shadow: var(--glass-edge); }
+.terminal-tab:hover { background: var(--control); }
+.terminal-tab.active:hover { background: var(--card-selected); }
+.terminal-tab button { padding: 3px 5px; }
+.terminal-tab > button:last-child { border-radius: 50%; }
+.terminal-tab > button:last-child:hover { background: var(--control-hover); }
+.settings-card, .empty-card { position: relative; background: var(--card-sheen), var(--card-glass); border-color: transparent; box-shadow: var(--lens-shadow); backdrop-filter: blur(12px) saturate(145%) contrast(1.04); }
 .theme-option { border-color: var(--liquid-border); background: var(--liquid-sheen), var(--control); }
 .theme-option.selected { border-color: var(--accent-outline); background: var(--liquid-sheen), var(--liquid-selected); }
 
@@ -117,6 +135,43 @@ input:not([type='checkbox']):not([type='radio']), textarea, select { border-colo
 .menu-item.danger-text:not(:disabled):hover, .menu-item.danger-text:focus-visible { background: var(--danger-soft); }
 .branch-picker-list > button.current { background: var(--liquid-selected); }
 .sidebar-collapsed .project-item { border-radius: 15px; }
+
+/* An uneven optical rim and small reflections give clear glass its thickness.
+   The material layers never filter or intercept the controls and text. */
+.service-card, .project-item, .settings-card, .empty-card, .project-tabs { isolation: isolate; }
+.service-card > *, .project-item > *, .settings-card > *, .empty-card > *, .project-tabs > * { position: relative; z-index: 1; }
+.service-card::before, .project-item::before, .settings-card::before, .empty-card::before, .project-tabs::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 180px 85px at var(--glass-pointer-x, 16%) var(--glass-pointer-y, 0%), var(--lens-glint), transparent 74%),
+    radial-gradient(ellipse 80px 45px at 100% 100%, var(--lens-corner), transparent 75%);
+  opacity: .75;
+  transition: opacity .2s ease;
+}
+.service-card:hover::before, .project-item:hover::before { opacity: 1; }
+.sidebar::after, .main-shell::after, .service-card::after, .project-item::after, .settings-card::after, .empty-card::after, .project-tabs::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--lens-rim);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+.sidebar::after, .main-shell::after { padding: 1px; opacity: .65; }
+.project-tabs::after { padding: 1px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .service-card::before, .project-item::before { transition: none; }
+}
 
 /* Semantic operation colors take priority over the neutral glass material. */
 .git-tool-button.git-branches { color: var(--violet); border-color: var(--line); background: var(--violet-soft); }
@@ -137,4 +192,9 @@ input:not([type='checkbox']):not([type='radio']), textarea, select { border-colo
   .sidebar, .main-shell, .service-card, .project-item, .settings-card, .empty-card, .git-columns, .file-columns, .history-panel { background: var(--surface-subtle); backdrop-filter: none; }
   .modal, .floating-panel, .toast { background: var(--surface); backdrop-filter: none; }
   .project-tabs, .sidebar-search, .sidebar-filters { background: var(--surface-subtle); }
+  .output-dock { background: var(--terminal); backdrop-filter: none; }
+  .sidebar::after, .main-shell::after, .service-card::before, .service-card::after,
+  .project-item::before, .project-item::after, .settings-card::before, .settings-card::after,
+  .empty-card::before, .empty-card::after, .project-tabs::before, .project-tabs::after { display: none; }
+  .service-card, .project-item, .settings-card, .empty-card { border-color: var(--line-strong); }
 }

@@ -1,13 +1,14 @@
 import type { GitFile } from '../../shared/contracts';
 
-export type GitTone = 'normal' | 'untracked' | 'staged' | 'modified' | 'conflict';
+export type GitTone = 'normal' | 'untracked' | 'staged' | 'modified' | 'deleted' | 'conflict';
 export const gitToneLabels: Record<GitTone, string> = {
-  normal: '未修改', untracked: '未跟踪的新文件', staged: '已暂存，尚未提交', modified: '有未暂存的修改', conflict: '合并冲突',
+  normal: '未修改', untracked: '未跟踪的新文件', staged: '已暂存，尚未提交', modified: '有未暂存的修改', deleted: '已删除', conflict: '合并冲突',
 };
-const priority: Record<GitTone, number> = { normal: 0, staged: 1, modified: 2, untracked: 3, conflict: 4 };
+const priority: Record<GitTone, number> = { normal: 0, deleted: 1, staged: 2, modified: 3, untracked: 4, conflict: 5 };
 export function gitFileTone(file: GitFile): GitTone {
   if (file.conflict) return 'conflict';
   if (file.index === '?' || file.working === '?') return 'untracked';
+  if (file.index === 'D' || file.working === 'D') return 'deleted';
   if (file.unstaged) return 'modified';
   return file.staged ? 'staged' : 'normal';
 }
