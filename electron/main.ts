@@ -13,10 +13,13 @@ import { GitService } from './services/git';
 import { ProcessService, orderServices } from './services/processes';
 import { listFiles, readTextFile, saveTextFile, readImageFile, createFileEntry } from './services/files';
 import { validateCloneName, withinProject } from './core/paths';
+import { registerRendererScheme, rendererUrl, isRendererNavigation, servePackagedRenderer } from './core/renderer';
 import type { DesktopEvent, ServiceProfile } from '../shared/contracts';
 
 if (process.env.AIPM_USER_DATA) app.setPath('userData', path.resolve(process.env.AIPM_USER_DATA));
 app.setName('项目工作台');
+if (process.platform === 'win32') app.setAppUserModelId('com.lyunsheng.aiprojectmanager');
+registerRendererScheme();
 nativeTheme.themeSource = 'dark';
 const locked = app.requestSingleInstanceLock();
 function reportLaunch(type: 'desktop-ready' | 'desktop-existing', extra: Record<string, unknown> = {}) {
@@ -205,8 +208,7 @@ for (const operation of ['stage', 'unstage', 'commit', 'create-branch', 'switch'
 }
 
 async function createWindow() {
-  const rendererUrl = process.env.AIPM_RENDERER_URL;
-  if (!rendererUrl || new URL(rendererUrl).hostname !== '127.0.0.1') throw new Error('请使用 npm.cmd run dev:desktop 启动桌面客户端');
+  const url = rendererUrl();
   window = new BrowserWindow({ width: 1440, height: 940, minWidth: 1000, minHeight: 680, show: false,
     icon: path.join(app.getAppPath(), 'resources', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     title: '项目工作台', backgroundColor: appearance.get() === 'light' ? '#edf3fa' : '#0b1220', autoHideMenuBar: true,
@@ -218,7 +220,7 @@ async function createWindow() {
       message: '有尚未保存的文件修改', detail: '离开后这些修改将丢失。', buttons: ['继续编辑', '放弃修改并离开'], defaultId: 0, cancelId: 0 });
     if (choice === 1) event.preventDefault();
   });
-  window.webContents.on('will-navigate', (event, url) => { if (new URL(url).origin !== new URL(rendererUrl).origin) event.preventDefault(); });
+  window.webContents.on('will-navigate', (event, target) => { if (!isRendererNavigation(target, url)) event.preventDefault(); });
   window.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   window.on('close', event => {
     if (quitting || !processes.hasActive()) return;
@@ -228,9 +230,9 @@ async function createWindow() {
     if (choice === 0) { quitting = true; void processes.shutdown().finally(() => app.quit()); }
   });
   window.on('closed', () => { window = null; });
-  await window.loadURL(rendererUrl);
+  await window.loadURL(url);
   revealWindow();
-  reportLaunch('desktop-ready', { pid: process.pid, visible: window.isVisible(), rendererUrl });
+  reportLaunch('desktop-ready', { pid: process.pid, visible: window.isVisible(), rendererUrl: url });
 }
 function revealWindow() {
   if (!window || window.isDestroyed() || process.env.AIPM_QA === '1') return;
@@ -240,6 +242,7 @@ function revealWindow() {
 app.on('second-instance', revealWindow);
 app.whenReady().then(async () => {
   if (!locked) return;
+  servePackagedRenderer();
   store = new ProjectStore(app.getPath('userData')); await store.load();
   appearance = new ThemeStore(app.getPath('userData')); await appearance.load(); applyNativeTheme();
   ipcMain.handle('pm:request', async (event, input: unknown) => {

@@ -11,6 +11,7 @@
     "desktop": "node scripts/dev.mjs",
     "dev:desktop": "node scripts/dev.mjs",
     "dev:web": "vite --host 127.0.0.1",
+    "package:win": "node scripts/package-windows.mjs",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.desktop.json",
     "test": "tsx --test tests/*.test.ts",
     "test:desktop": "node scripts/smoke-desktop.mjs",
@@ -43,6 +44,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@electron/packager": "^20.3.0",
     "@types/node": "^26.6.5",
     "@vitejs/plugin-vue": "^6.0.10",
     "electron": "^44.8.0",
