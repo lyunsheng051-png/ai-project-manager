@@ -1,17 +1,46 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppIcon from '@/components/common/AppIcon.vue';
 import FileTree from './FileTree.vue';
+import FileDeleteDialog from './FileDeleteDialog.vue';
 import CodeEditor from './CodeEditor.vue';
 import ImagePreview from './ImagePreview.vue';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { useFileTabs, isDocumentDirty } from '@/composables/useFileTabs';
 import { useFileSplitResize } from '@/composables/useFileSplitResize';
+import { useRepositoryGuard, useRepositoryState } from '@/composables/useRepositoryState';
 import { request } from '@/api/desktop';
-import type { Project } from '@/types';
+import type { Project, FileEntry } from '@/types';
 
 const props = withDefaults(defineProps<{ project: Project; visible?: boolean }>(), { visible: true });
 const ws = useWorkspace(); const tabs = useFileTabs(props.project.id);
+const repository = useRepositoryState(props.project.id);
+const fileTree = ref<InstanceType<typeof FileTree>>();
+const removal = ref<FileEntry>(); const deleting = ref(false); const deleteError = ref('');
+const dirtyRemovalNames = computed(() => removal.value ? tabs.affectedDocuments(removal.value.path).filter(isDocumentDirty).map(document => document.entry.path) : []);
+useRepositoryGuard(props.project.id, () => {
+  if (removal.value || deleting.value) { ws.notify('请先完成文件删除操作，再切换分支'); return false; }
+  return true;
+});
+function requestRemoval(entry: FileEntry) {
+  if (!entry.path || repository.busy.value || deleting.value) return;
+  if (tabs.affectedDocuments(entry.path).some(document => document.saving)) { ws.notify('文件正在保存，请稍后删除'); return; }
+  deleteError.value = ''; removal.value = entry;
+}
+async function deleteEntry() {
+  const entry = removal.value; if (!entry || deleting.value) return;
+  if (tabs.affectedDocuments(entry.path).some(document => document.saving)) { ws.notify('文件正在保存，请稍后删除'); return; }
+  deleting.value = true; deleteError.value = '';
+  try {
+    await request('files:delete', { projectId: props.project.id, path: entry.path, directory: entry.directory });
+    tabs.removePath(entry.path); removal.value = undefined;
+    await fileTree.value?.afterDelete(entry.path);
+    ws.notify(`已移入回收站：${entry.name}`);
+  } catch (error) {
+    deleteError.value = error instanceof Error ? error.message : String(error);
+    ws.notify(deleteError.value, 'error'); await fileTree.value?.refresh();
+  } finally { deleting.value = false; }
+}
 const tabBar = ref<HTMLElement>();
 const columns = ref<HTMLElement>();
 const split = useFileSplitResize(columns);
@@ -22,16 +51,18 @@ watch(tabs.activePath, async () => {
 function shortcut(event: KeyboardEvent) {
   if (!props.visible || event.defaultPrevented || !tabs.active.value) return;
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
-    event.preventDefault(); if (tabs.active.value.kind === 'text') void tabs.save();
+    event.preventDefault();
+    if (removal.value || deleting.value || repository.busy.value) return;
+    if (tabs.active.value.kind === 'text') void tabs.save();
   }
 }
 onMounted(() => { window.addEventListener('keydown', shortcut); window.addEventListener('beforeunload', tabs.beforeUnload); });
 onBeforeUnmount(() => { window.removeEventListener('keydown', shortcut); window.removeEventListener('beforeunload', tabs.beforeUnload); });
 </script>
 <template>
-  <section class="file-panel">
+  <section v-show="visible" class="file-panel" :inert="repository.busy.value || Boolean(removal) || deleting" :aria-busy="repository.busy.value || deleting">
     <div ref="columns" class="file-columns" :class="{ 'is-resizing-files': split.dragging.value }" :style="{ gridTemplateColumns: `${split.width.value}px 5px minmax(0, 1fr)` }">
-      <div :id="`file-tree-${project.id}`" class="file-list-column"><FileTree :project="project" :selected-path="tabs.activePath.value" @select="tabs.open" /></div>
+      <div :id="`file-tree-${project.id}`" class="file-list-column"><FileTree ref="fileTree" :project="project" :selected-path="tabs.activePath.value" @select="tabs.open" @remove="requestRemoval" /></div>
       <div class="file-split-resizer" role="separator" aria-orientation="vertical" aria-label="调整文件目录宽度" :aria-controls="`file-tree-${project.id}`" :aria-valuemin="Math.round(split.minWidth.value)" :aria-valuemax="Math.round(split.maxWidth.value)" :aria-valuenow="split.width.value" tabindex="0" title="左右拖动调整宽度，双击恢复默认" @pointerdown="split.start" @pointermove="split.move" @pointerup="split.finish" @pointercancel="split.finish" @lostpointercapture="split.finish" @keydown="split.keydown" @dblclick="split.reset" />
       <div class="file-preview">
         <div v-if="tabs.documents.value.length" ref="tabBar" class="file-tabs" role="tablist" aria-label="打开的文件">
@@ -58,4 +89,5 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', shortcut); window.
       </div>
     </div>
   </section>
+  <FileDeleteDialog v-if="removal && visible" :entry="removal" :dirty-names="dirtyRemovalNames" :busy="deleting" :error="deleteError" @close="removal = undefined" @confirm="deleteEntry" />
 </template>

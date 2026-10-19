@@ -24,6 +24,15 @@ export interface GitStatus {
   files: GitFile[]; merging: boolean;
 }
 export interface FileEntry { name: string; path: string; directory: boolean; size: number }
+export type FileCreationKind = 'file' | 'directory';
+export type FileCopySource = { projectId: string; path: string } | { externalPath: string };
+export interface FileCopyRequest { projectId: string; path: string; sources: FileCopySource[] }
+export type FileCopyConflict = 'rename' | 'skip';
+export interface FileCopyCheck { names: string[]; conflicts: string[] }
+export interface FileCopyResult {
+  copied: FileEntry[]; skipped: string[]; failed: { name: string; message: string }[];
+  skippedLinks: number; skippedGit: number;
+}
 export interface ImagePreviewData { dataUrl: string; mimeType: string; size: number }
 export interface AppMetrics { workingSetMb: number; cpu: number; processCount: number }
 export type ThemeMode = 'dark' | 'light';
@@ -72,6 +81,12 @@ export interface ActionPayloads {
   'git:merge': { projectId: string; name: string };
   'git:abort': { projectId: string };
   'files:list': { projectId: string; path: string };
+  'files:create': { projectId: string; path: string; name: string; kind: FileCreationKind };
+  'files:delete': { projectId: string; path: string; directory: boolean };
+  'files:clipboard:read': undefined;
+  'files:clipboard:write': { projectId: string; path: string };
+  'files:copy:check': FileCopyRequest;
+  'files:copy': FileCopyRequest & { conflict: FileCopyConflict };
   'files:read': { projectId: string; path: string };
   'files:image': { projectId: string; path: string };
   'files:save': { projectId: string; path: string; content: string; original: string };
@@ -98,12 +113,19 @@ export interface ActionResults {
   'git:create-branch': string; 'git:switch': string; 'git:fetch': string; 'git:pull': string;
   'git:push': string; 'git:merge': string; 'git:abort': string;
   'files:list': FileEntry[]; 'files:read': string; 'files:image': ImagePreviewData; 'files:save': string; 'files:open': void;
+  'files:create': FileEntry;
+  'files:delete': void;
+  'files:clipboard:read': string[];
+  'files:clipboard:write': void;
+  'files:copy:check': FileCopyCheck;
+  'files:copy': FileCopyResult;
   'project:reveal': void; 'url:open': void; metrics: AppMetrics;
 }
 export type Action = keyof ActionPayloads;
 export type Request = <K extends Action>(action: K, payload: ActionPayloads[K]) => Promise<ActionResults[K]>;
 export interface DesktopBridge {
   readonly platform?: string;
+  getPathForFile?: (file: unknown) => string;
   request: Request;
   subscribe: (listener: (event: DesktopEvent) => void) => () => void;
 }

@@ -97,7 +97,9 @@ export class GitService {
         case 'create-branch':
           await this.validateBranch(root, value); args = ['switch', '-c', value as string]; break;
         case 'switch':
-          await this.validateBranch(root, value); args = ['switch', value as string]; break;
+          await this.validateBranch(root, value);
+          await gitCommand(root, ['show-ref', '--verify', '--quiet', `refs/heads/${value as string}`]);
+          args = ['switch', '--no-guess', value as string]; break;
         case 'merge':
           await this.validateBranch(root, value); args = ['merge', '--no-edit', '--', value as string]; break;
         case 'abort': args = ['merge', '--abort']; break;

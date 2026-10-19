@@ -65,6 +65,18 @@ export function useFileTree(project: Project) {
     } finally { if (current === generation) refreshing.value = false; }
   }
   function collapseAll() { expanded.clear(); expanded.add(''); }
+  async function revealCreated(entry: FileEntry) {
+    await revealEntries([entry]);
+  }
+  async function revealEntries(entries: FileEntry[]) {
+    expanded.add('');
+    for (const entry of entries) {
+      const parts = entry.path.split('/'); parts.pop();
+      for (let index = 1; index <= parts.length; index++) expanded.add(parts.slice(0, index).join('/'));
+      if (entry.directory) expanded.add(entry.path);
+    }
+    await refresh();
+  }
   onBeforeUnmount(() => { generation++; });
-  return { rows, children, expanded, pending, errors, refreshing, toggle, refresh, collapseAll };
+  return { rows, children, expanded, pending, errors, refreshing, toggle, refresh, collapseAll, revealCreated, revealEntries };
 }

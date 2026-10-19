@@ -1,7 +1,10 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('desktop', {
   platform: process.platform,
+  getPathForFile: (file) => {
+    try { return webUtils.getPathForFile(file); } catch { return ''; }
+  },
   request: async (action, payload) => {
     const result = await ipcRenderer.invoke('pm:request', { action, payload });
     if (!result.ok) throw new Error(result.error);

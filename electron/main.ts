@@ -5,10 +5,13 @@ import { access } from 'node:fs/promises';
 import { z } from 'zod';
 import { ProjectStore } from './repositories/project-store';
 import { ThemeStore } from './repositories/theme-store';
+import { checkFileCopy, copyFileEntries } from './services/file-copy';
+import { readFileClipboard, writeFileClipboard } from './services/file-clipboard';
+import { trashProjectEntry } from './services/file-delete';
 import { scanProject, mergeScannedServices } from './services/scanner';
 import { GitService } from './services/git';
 import { ProcessService, orderServices } from './services/processes';
-import { listFiles, readTextFile, saveTextFile, readImageFile } from './services/files';
+import { listFiles, readTextFile, saveTextFile, readImageFile, createFileEntry } from './services/files';
 import { validateCloneName, withinProject } from './core/paths';
 import type { DesktopEvent, ServiceProfile } from '../shared/contracts';
 
@@ -45,6 +48,13 @@ const processes = new ProcessService(emit);
 let quitting = false;
 const pid = z.object({ projectId: z.string().min(1).max(100) });
 const file = pid.extend({ path: z.string().max(4096) });
+const copyRequest = file.extend({ sources: z.array(z.union([
+  z.object({ projectId: z.string().min(1).max(100), path: z.string().min(1).max(4096) }),
+  z.object({ externalPath: z.string().min(1).max(4096) }),
+])).min(1).max(200) });
+async function copySources(sources: z.infer<typeof copyRequest>['sources']) {
+  return Promise.all(sources.map(source => 'externalPath' in source ? source.externalPath : withinProject(store.get(source.projectId).path, source.path)));
+}
 const serviceId = pid.extend({ serviceId: z.string().min(1).max(100) });
 const serviceSchema = z.object({
   id: z.string().max(100), name: z.string().trim().min(1).max(100),
@@ -135,6 +145,29 @@ const handlers: Record<string, Handler> = {
     return result || '没有可显示的差异';
   },
   'files:list': payload => { const v = file.parse(payload); return listFiles(store.get(v.projectId).path, v.path); },
+  'files:delete': async payload => {
+    const v = file.extend({ path: z.string().min(1).max(4096), directory: z.boolean() }).parse(payload);
+    await trashProjectEntry(store.get(v.projectId).path, v.path, v.directory, store.list().map(project => project.path), target => shell.trashItem(target));
+  },
+  'files:clipboard:read': () => readFileClipboard(),
+  'files:clipboard:write': async payload => {
+    const v = file.extend({ path: z.string().min(1).max(4096) }).parse(payload);
+    const source = await withinProject(store.get(v.projectId).path, v.path);
+    await checkFileCopy(store.get(v.projectId).path, '', [source]);
+    await writeFileClipboard(source);
+  },
+  'files:copy:check': async payload => {
+    const v = copyRequest.parse(payload);
+    return checkFileCopy(store.get(v.projectId).path, v.path, await copySources(v.sources));
+  },
+  'files:copy': async payload => {
+    const v = copyRequest.extend({ conflict: z.enum(['rename', 'skip']) }).parse(payload);
+    return copyFileEntries(store.get(v.projectId).path, v.path, await copySources(v.sources), v.conflict);
+  },
+  'files:create': payload => {
+    const v = file.extend({ name: z.string().min(1).max(255), kind: z.enum(['file', 'directory']) }).parse(payload);
+    return createFileEntry(store.get(v.projectId).path, v.path, v.name, v.kind);
+  },
   'files:read': payload => { const v = file.parse(payload); return readTextFile(store.get(v.projectId).path, v.path); },
   'files:image': payload => { const v = file.parse(payload); return readImageFile(store.get(v.projectId).path, v.path); },
   'files:save': payload => {

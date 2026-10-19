@@ -7,6 +7,7 @@ import { usePagination } from '@/composables/usePagination';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { request } from '@/api/desktop';
 import type { GitBranch } from '@/types';
+import { changeRepository } from '@/composables/useRepositoryState';
 const props = defineProps<{ projectId: string }>(); const emit = defineEmits<{ close: [] }>();
 const ws = useWorkspace(); const branches = ref<GitBranch[]>([]); const name = ref(''); const search = ref(''); const busy = ref(false);
 const filtered = computed(() => branches.value.filter(b => b.name.toLowerCase().includes(search.value.toLowerCase())));
@@ -16,7 +17,9 @@ async function act(operation: 'create-branch' | 'switch' | 'merge', target: stri
   if (operation === 'merge' && !confirm(`将分支“${target}”合并到当前分支？遇到冲突时会保留现场，供你检查。`)) return;
   busy.value = true;
   await ws.task('更新分支', async () => {
-    const result = await request(`git:${operation}`, { projectId: props.projectId, name: target });
+    let result = '';
+    const changed = await changeRepository(props.projectId, async () => { result = await request(`git:${operation}`, { projectId: props.projectId, name: target }); });
+    if (!changed) return;
     ws.notify(result || '分支操作完成'); name.value = ''; await load(); emit('close');
   });
   await ws.refreshGit(); busy.value = false;

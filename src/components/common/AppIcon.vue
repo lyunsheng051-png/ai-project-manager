@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Folder, FolderOpen, FolderPlus, GitBranch, GitCommitHorizontal, GitMerge, GitPullRequest,
+import { Folder, FolderOpen, FolderPlus, FilePlus, ClipboardPaste, GitBranch, GitCommitHorizontal, GitMerge, GitPullRequest,
   Terminal, Play, Square, RotateCw, RefreshCw, Plus, X, Search, Settings, ChevronRight, ChevronLeft,
   ChevronDown, ExternalLink, FileText, Star, Ellipsis, ArrowDown, ArrowUp, Download, Upload, Check,
   Layers, Cpu, Circle, Code, Trash2, Copy, PanelBottom, ArrowLeft, Loader, Files, CircleAlert, Command, Activity, Save, Pencil, Minus, Image, ZoomIn, ZoomOut, Maximize, Sun, Moon } from '@lucide/vue';
-const icons = { Folder, FolderOpen, FolderPlus, GitBranch, GitCommitHorizontal, GitMerge, GitPullRequest, Terminal,
+const icons = { Folder, FolderOpen, FolderPlus, FilePlus, ClipboardPaste, GitBranch, GitCommitHorizontal, GitMerge, GitPullRequest, Terminal,
   Play, Square, RotateCw, RefreshCw, Plus, X, Search, Settings, ChevronRight, ChevronLeft, ChevronDown, ExternalLink,
   FileText, Star, Ellipsis, ArrowDown, ArrowUp, Download, Upload, Check, Layers, Cpu, Circle, Code, Trash2, Copy,
   PanelBottom, ArrowLeft, Loader, Files, CircleAlert, Command, Activity, Save, Pencil, Minus, Image, ZoomIn, ZoomOut, Maximize, Sun, Moon };

@@ -1,10 +1,38 @@
-import { readdir, stat, readFile, writeFile, rename, unlink, realpath } from 'node:fs/promises';
+import { readdir, stat, readFile, writeFile, rename, unlink, realpath, mkdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { withinProject } from '../core/paths';
 import { ignoredDirectories } from './scanner';
-import type { FileEntry, ImagePreviewData } from '../../shared/contracts';
+import type { FileEntry, ImagePreviewData, FileCreationKind } from '../../shared/contracts';
 import { imageMimeType, isImageFile } from '../../shared/file-kinds';
+import { fileEntryNameError } from '../../shared/file-creation';
+
+export async function createFileEntry(root: string, relative: string, name: string, kind: FileCreationKind): Promise<FileEntry> {
+  const invalid = fileEntryNameError(name);
+  if (invalid) throw new Error(invalid);
+  if (ignoredDirectories.has(name)) throw new Error('该名称属于文件树隐藏的依赖或生成目录，请使用其他名称');
+  if (path.isAbsolute(relative) || relative.split(/[\\/]/).includes('..')) throw new Error('创建位置必须在当前项目内');
+  const canonicalRoot = await realpath(root);
+  const directory = await withinProject(canonicalRoot, relative, true);
+  if (path.relative(canonicalRoot, directory).split(path.sep).some(part => part.toLowerCase() === '.git')) {
+    throw new Error('不能在 Git 内部目录中创建文件');
+  }
+  const target = path.join(directory, name);
+  if (await withinProject(canonicalRoot, relative, true) !== directory) throw new Error('目录路径已发生变化，请刷新后重试');
+  try {
+    // 独占创建，不覆盖已有文件、目录或符号链接。
+    if (kind === 'directory') await mkdir(target, { recursive: false });
+    else await writeFile(target, '', { encoding: 'utf8', flag: 'wx' });
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'EEXIST' || code === 'EISDIR') throw new Error('同名文件或目录已经存在，请换一个名称');
+    if (code === 'ENOENT' || code === 'ENOTDIR') throw new Error('创建位置已不存在，请刷新目录后重试');
+    if (code === 'EACCES' || code === 'EPERM') throw new Error('没有权限在该目录中创建文件或目录');
+    if (code === 'ENAMETOOLONG') throw new Error('文件名称或路径过长，请缩短后重试');
+    throw error;
+  }
+  return { name, path: path.relative(canonicalRoot, target).replaceAll('\\', '/'), directory: kind === 'directory', size: 0 };
+}
 
 export async function listFiles(root: string, relative: string): Promise<FileEntry[]> {
   const directory = await withinProject(root, relative, true);

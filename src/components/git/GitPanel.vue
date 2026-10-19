@@ -6,13 +6,20 @@ import BranchDialog from './BranchDialog.vue';
 import { request } from '@/api/desktop';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { usePagination } from '@/composables/usePagination';
+import { useRepositoryGuard, useRepositoryState } from '@/composables/useRepositoryState';
 import { shortDate } from '@/config/display';
 import type { Project, GitFile, GitCommit } from '@/types';
 import { gitFileTone, gitToneLabels } from '@/config/gitDecorations';
 const props = defineProps<{ project: Project }>(); const ws = useWorkspace();
+const repository = useRepositoryState(props.project.id);
 const mode = ref<'changes' | 'history'>('changes'); const checked = ref<string[]>([]); const message = ref('');
 const selectedFile = ref<GitFile>(); const selectedStaged = ref(false); const diff = ref(''); const diffLoading = ref(false);
 const history = ref<GitCommit[]>([]); const busy = ref(false); const branches = ref(false); let diffSequence = 0;
+let historySequence = 0;
+useRepositoryGuard(props.project.id, () => {
+  if (busy.value) { ws.notify('Git 操作正在进行，请完成后再切换分支'); return false; }
+  return true;
+});
 const files = computed(() => ws.gitStatus.value?.files || []);
 const historyPager = usePagination(() => history.value);
 const stagedCount = computed(() => files.value.filter(f => f.staged).length);
@@ -22,7 +29,16 @@ watch(files, value => {
   const paths = new Set(value.map(f => f.path)); checked.value = checked.value.filter(p => paths.has(p));
   if (selectedFile.value && !paths.has(selectedFile.value.path)) { selectedFile.value = undefined; diff.value = ''; diffLoading.value = false; diffSequence++; }
 });
-async function loadHistory() { history.value = await request('git:history', { projectId: props.project.id }); }
+async function loadHistory() {
+  const sequence = ++historySequence;
+  const items = await request('git:history', { projectId: props.project.id });
+  if (sequence === historySequence) history.value = items;
+}
+watch(repository.revision, () => {
+  checked.value = []; selectedFile.value = undefined; diff.value = ''; diffLoading.value = false; diffSequence++;
+  history.value = []; historyPager.page.value = 1;
+  void ws.task('读取提交历史', loadHistory);
+});
 async function refresh() { await ws.refreshGit(); if (ws.gitStatus.value?.isRepository) await ws.task('读取提交历史', loadHistory); }
 async function showDiff(file: GitFile, staged: boolean) {
   selectedFile.value = file; selectedStaged.value = staged; const sequence = ++diffSequence; diffLoading.value = true;
@@ -33,7 +49,7 @@ async function showDiff(file: GitFile, staged: boolean) {
   if (sequence === diffSequence) diffLoading.value = false;
 }
 async function mutate(operation: 'stage' | 'unstage' | 'commit' | 'fetch' | 'pull' | 'push' | 'abort') {
-  if (busy.value) return; busy.value = true;
+  if (busy.value || repository.busy.value) return; busy.value = true;
   await ws.task(`Git ${operation}`, async () => {
     if (operation === 'stage' || operation === 'unstage') {
       const paths = selected.value.filter(f => operation === 'stage' ? f.unstaged : f.staged).flatMap(f => operation === 'unstage' && f.originalPath ? [f.path, f.originalPath] : [f.path]);
@@ -50,7 +66,7 @@ function toggleAll(event: Event) { checked.value = (event.target as HTMLInputEle
 onMounted(refresh);
 </script>
 <template>
-  <section class="git-panel">
+  <section class="git-panel" :inert="repository.busy.value" :aria-busy="repository.busy.value">
     <div class="git-toolbar">
       <div class="segmented"><button :class="{ active: mode === 'changes' }" :disabled="!ws.gitStatus.value?.isRepository" @click="mode = 'changes'">工作区</button><button :class="{ active: mode === 'history' }" :disabled="!ws.gitStatus.value?.isRepository" @click="mode = 'history'">提交历史</button></div>
       <div class="git-toolbar-actions" role="group" aria-label="Git 操作">
