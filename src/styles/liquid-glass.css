@@ -179,8 +179,15 @@ input:not([type='checkbox']):not([type='radio']), textarea, select { border-colo
 .git-tool-button.git-branches:not(:disabled):hover { color: var(--violet); border-color: var(--violet); background: var(--violet-soft); }
 .git-sync-actions .git-fetch { color: var(--accent); background: var(--accent-soft); }
 .git-sync-actions .git-pull { color: var(--teal); background: var(--teal-soft); }
+.git-sync-actions .git-merge-remote { color: var(--warning); background: var(--warning-soft); }
 .git-sync-actions .git-fetch:not(:disabled):hover { color: var(--accent); background: var(--accent-hover); }
 .git-sync-actions .git-pull:not(:disabled):hover { color: var(--teal); background: var(--teal-soft); border-color: var(--teal); }
+.git-sync-actions .git-merge-remote:not(:disabled):hover { color: var(--warning); background: var(--warning-soft); border-color: var(--warning); }
+.git-conflict-banner { align-items: flex-start; }
+.git-conflict-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
+.git-conflict-copy strong { color: var(--warning); font-size: var(--text-sm); font-weight: 650; }
+.git-conflict-copy span { color: var(--secondary); }
+.git-conflict-banner .button-group { margin-left: auto; align-self: center; flex-shrink: 0; }
 .staging-actions .stage-action:not(:disabled) { color: var(--success); background: var(--success-soft); }
 .staging-actions .stage-action:not(:disabled):hover { color: var(--success); background: var(--success-soft); box-shadow: inset 0 0 0 1px var(--success-line); }
 .staging-actions .unstage-action:not(:disabled) { color: var(--warning); background: var(--warning-soft); }

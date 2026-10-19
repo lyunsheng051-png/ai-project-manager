@@ -1,7 +1,8 @@
 import { execFile } from 'node:child_process';
-import { access } from 'node:fs/promises';
+import { access, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
-import type { GitFile, GitStatus, GitCommit, GitBranch } from '../../shared/contracts';
+import type { GitFile, GitStatus, GitCommit, GitBranch, GitConflictData } from '../../shared/contracts';
 import { ProjectQueue } from '../core/queue';
 import { validateRemote } from '../core/paths';
 
@@ -19,6 +20,40 @@ export function gitCommand(directory: string, args: string[], network = false, i
       child.stdin?.end(input, 'utf8');
     }
   });
+}
+
+function gitMergeFile(directory: string, args: string[]): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile('git', ['-c', 'core.quotepath=false', '-C', directory, ...args], {
+      encoding: 'utf8', windowsHide: true, timeout: 30_000, maxBuffer: 8 * 1024 * 1024,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'auto' },
+    }, (error, stdout, stderr) => {
+      // git merge-file returns 1 when it found conflicts, but stdout is still
+      // the useful conflict-marked merge result.
+      if (!error || Number(error.code) === 1) resolve(stdout || '');
+      else reject(new Error(String(stderr || error.message).trim()));
+    });
+  });
+}
+
+async function buildMergePreview(root: string, base: string, current: string, remote: string) {
+  const directory = await mkdtemp(path.join(tmpdir(), 'ai-project-merge-'));
+  const baseFile = path.join(directory, 'base');
+  const currentFile = path.join(directory, 'current');
+  const remoteFile = path.join(directory, 'remote');
+  try {
+    await Promise.all([
+      writeFile(baseFile, base, 'utf8'),
+      writeFile(currentFile, current, 'utf8'),
+      writeFile(remoteFile, remote, 'utf8'),
+    ]);
+    const merged = await gitMergeFile(root, ['merge-file', '--stdout', '-L', '当前本地', '-L', '共同祖先', '-L', '远端', currentFile, baseFile, remoteFile]);
+    return /^<<<<<<<[^\r\n]*(?:\r\n|\n|\r)/m.test(merged) ? merged : '';
+  } catch {
+    return '';
+  } finally {
+    await rm(directory, { recursive: true, force: true }).catch(() => undefined);
+  }
 }
 
 export function parseStatus(output: string): GitFile[] {
@@ -76,6 +111,15 @@ export class GitService {
   async diff(root: string, file: string, staged: boolean): Promise<string> {
     return gitCommand(root, ['diff', ...(staged ? ['--cached'] : []), '--no-ext-diff', '--no-textconv', '--', file]);
   }
+  async conflict(root: string, file: string, result: string): Promise<GitConflictData> {
+    // Git 的索引阶段对象必须使用 `:<stage>:<path>` 语法：
+    // 1 是共同祖先，2 是当前本地版本，3 是远端版本。
+    // 缺少最前面的冒号会被 Git 解析成名为 "2"/"3" 的对象，导致两侧内容被误读为空。
+    const readStage = (stage: 1 | 2 | 3) => gitCommand(root, ['show', ':' + stage + ':' + file]).catch(() => '');
+    const [base, current, remote] = await Promise.all([readStage(1), readStage(2), readStage(3)]);
+    const mergePreview = /^<<<<<<<[^\r\n]*(?:\r\n|\n|\r)/m.test(result) ? '' : await buildMergePreview(root, base, current, remote);
+    return { path: file, base, current, remote, result, ...(mergePreview ? { mergePreview } : {}) };
+  }
   mutate(root: string, operation: string, value?: string | string[]): Promise<string> {
     return this.queue.run(root, async () => {
       const paths = Array.isArray(value) ? value : [];
@@ -105,6 +149,15 @@ export class GitService {
         case 'abort': args = ['merge', '--abort']; break;
         case 'fetch': args = ['fetch', '--prune']; break;
         case 'pull': args = ['pull', '--ff-only']; break;
+        case 'merge-remote': {
+          const status = await this.status(root);
+          if (status.merging) throw new Error('当前已有未完成的合并，请先处理冲突并提交，或中止合并');
+          if (!status.upstream) throw new Error('当前分支没有配置远端上游，请先推送一次或在终端配置上游分支');
+          await gitCommand(root, ['fetch', '--prune'], true);
+          const upstream = (await gitCommand(root, ['rev-parse', '--abbrev-ref', '@{upstream}'])).trim();
+          if (!upstream) throw new Error('无法确定当前分支对应的远端分支');
+          args = ['merge', '--no-edit', '--', upstream]; break;
+        }
         case 'push': {
           const status = await this.status(root);
           if (status.branch.includes('(detached)')) throw new Error('当前为游离 HEAD，请先切换到分支再推送');
@@ -114,7 +167,24 @@ export class GitService {
         }
         default: throw new Error('不支持的 Git 操作');
       }
-      return gitCommand(root, args, ['fetch', 'pull', 'push'].includes(operation), input);
+      try {
+        return await gitCommand(root, args, ['fetch', 'pull', 'push'].includes(operation), input);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (operation === 'push' && /non-fast-forward|fetch first|rejected|remote rejected|failed to push/i.test(message)) {
+          throw new Error('远端有新的提交，推送被拒绝。请先点击“合并远端”，处理冲突并提交合并后，再重新推送。');
+        }
+        if (operation === 'pull' && /not possible to fast-forward|divergent branches|would be overwritten|local changes/i.test(message)) {
+          throw new Error('本地与远端无法直接快进。请先保存或提交本地修改，再点击“合并远端”；如出现冲突，请在文件浏览中处理后提交合并。');
+        }
+        if (operation === 'merge-remote' && /CONFLICT|Automatic merge failed|merge conflict/i.test(message)) {
+          throw new Error('远端已获取，但合并产生了文件冲突。请在文件浏览中处理带冲突标记的文件，保存后回到 Git 变更暂存并提交合并。');
+        }
+        if (operation === 'commit' && /unmerged|cannot commit|resolve your current index first|would be overwritten/i.test(message)) {
+          throw new Error('还有冲突文件未解决，请在文件浏览中处理冲突标记，保存并暂存所有冲突文件后再提交合并。');
+        }
+        throw error;
+      }
     });
   }
   private async validateBranch(root: string, name: unknown) {

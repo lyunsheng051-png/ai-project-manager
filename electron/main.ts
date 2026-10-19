@@ -144,6 +144,12 @@ const handlers: Record<string, Handler> = {
     if (!result && !input.staged) return readTextFile(project.path, input.path).catch(() => '没有可显示的文本差异');
     return result || '没有可显示的差异';
   },
+  'git:conflict': async payload => {
+    const input = file.parse(payload); const project = store.get(input.projectId);
+    if (path.isAbsolute(input.path) || input.path.split(/[\\/]/).includes('..')) throw new Error('文件路径无效');
+    const result = await readTextFile(project.path, input.path).catch(() => '');
+    return git.conflict(project.path, input.path, result);
+  },
   'files:list': payload => { const v = file.parse(payload); return listFiles(store.get(v.projectId).path, v.path); },
   'files:delete': async payload => {
     const v = file.extend({ path: z.string().min(1).max(4096), directory: z.boolean() }).parse(payload);
@@ -190,7 +196,7 @@ const handlers: Record<string, Handler> = {
       cpu: Math.round(metrics.reduce((sum, p) => sum + p.cpu.percentCPUUsage, 0) * 10) / 10, processCount: metrics.length };
   },
 };
-for (const operation of ['stage', 'unstage', 'commit', 'create-branch', 'switch', 'fetch', 'pull', 'push', 'merge', 'abort']) {
+for (const operation of ['stage', 'unstage', 'commit', 'create-branch', 'switch', 'fetch', 'pull', 'merge-remote', 'push', 'merge', 'abort']) {
   handlers[`git:${operation}`] = async payload => {
     const v = pid.extend({ paths: z.array(z.string().max(4096)).max(100_000).optional(), message: z.string().max(20_000).optional(), name: z.string().max(250).optional() }).parse(payload);
     if (v.paths?.some(p => !p || p.includes('\0') || path.isAbsolute(p) || p.split(/[\\/]/).includes('..'))) throw new Error('文件路径无效');

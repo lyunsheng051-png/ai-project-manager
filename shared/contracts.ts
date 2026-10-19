@@ -17,6 +17,9 @@ export interface GitFile {
   path: string; originalPath?: string; index: string; working: string;
   staged: boolean; unstaged: boolean; conflict: boolean;
 }
+export interface GitConflictData {
+  path: string; base: string; current: string; remote: string; result: string; mergePreview?: string;
+}
 export interface GitCommit { hash: string; shortHash: string; author: string; date: string; subject: string }
 export interface GitBranch { name: string; hash: string; current: boolean }
 export interface GitStatus {
@@ -70,6 +73,7 @@ export interface ActionPayloads {
   'git:history': { projectId: string };
   'git:branches': { projectId: string };
   'git:diff': { projectId: string; path: string; staged: boolean };
+  'git:conflict': { projectId: string; path: string };
   'git:stage': { projectId: string; paths: string[] };
   'git:unstage': { projectId: string; paths: string[] };
   'git:commit': { projectId: string; message: string };
@@ -77,6 +81,7 @@ export interface ActionPayloads {
   'git:switch': { projectId: string; name: string };
   'git:fetch': { projectId: string };
   'git:pull': { projectId: string };
+  'git:merge-remote': { projectId: string };
   'git:push': { projectId: string };
   'git:merge': { projectId: string; name: string };
   'git:abort': { projectId: string };
@@ -108,9 +113,10 @@ export interface ActionResults {
   'service:start': void; 'service:stop': void; 'service:start-all': void; 'service:stop-all': void;
   'service:output': string;
   'terminal:create': TerminalSession; 'terminal:write': void; 'terminal:resize': void; 'terminal:close': void;
-  'git:status': GitStatus; 'git:history': GitCommit[]; 'git:branches': GitBranch[]; 'git:diff': string;
+  'git:status': GitStatus; 'git:history': GitCommit[]; 'git:branches': GitBranch[]; 'git:diff': string; 'git:conflict': GitConflictData;
   'git:stage': string; 'git:unstage': string; 'git:commit': string;
   'git:create-branch': string; 'git:switch': string; 'git:fetch': string; 'git:pull': string;
+  'git:merge-remote': string;
   'git:push': string; 'git:merge': string; 'git:abort': string;
   'files:list': FileEntry[]; 'files:read': string; 'files:image': ImagePreviewData; 'files:save': string; 'files:open': void;
   'files:create': FileEntry;
