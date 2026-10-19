@@ -14,7 +14,7 @@
 .project-path { color: var(--secondary); }
 .statusbar { background: var(--status-glass); border-top-color: var(--liquid-border); }
 
-.brand-symbol { border-radius: 12px; box-shadow: var(--glass-edge), var(--primary-shadow); }
+.brand-symbol { border-radius: 0; box-shadow: none; }
 .sidebar-search {
   border-color: var(--liquid-border);
   border-radius: var(--radius-pill);

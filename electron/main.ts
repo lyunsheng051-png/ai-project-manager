@@ -208,6 +208,7 @@ async function createWindow() {
   const rendererUrl = process.env.AIPM_RENDERER_URL;
   if (!rendererUrl || new URL(rendererUrl).hostname !== '127.0.0.1') throw new Error('请使用 npm.cmd run dev:desktop 启动桌面客户端');
   window = new BrowserWindow({ width: 1440, height: 940, minWidth: 1000, minHeight: 680, show: false,
+    icon: path.join(app.getAppPath(), 'resources', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     title: '项目工作台', backgroundColor: appearance.get() === 'light' ? '#edf3fa' : '#0b1220', autoHideMenuBar: true,
     ...(process.platform === 'win32' ? { titleBarStyle: 'hidden' as const, titleBarOverlay: titleBarColors() } : {}),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });

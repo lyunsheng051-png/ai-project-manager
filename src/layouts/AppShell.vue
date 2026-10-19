@@ -3,6 +3,7 @@ import { computed, nextTick, ref } from 'vue';
 import { vGlassLight } from '@/composables/useGlassLight';
 import { useRoute, useRouter } from 'vue-router';
 import AppIcon from '@/components/common/AppIcon.vue';
+import AppLogo from '@/components/common/AppLogo.vue';
 import PaginationControls from '@/components/common/PaginationControls.vue';
 import CloneDialog from '@/components/projects/CloneDialog.vue';
 import ProjectIdentity from '@/components/projects/ProjectIdentity.vue';
@@ -49,7 +50,7 @@ async function remove(project: Project) {
 <template>
   <div class="app-shell" :class="{ 'sidebar-collapsed': sidebar.collapsed.value }">
     <aside id="project-sidebar" class="sidebar" aria-label="项目导航">
-      <div class="sidebar-header"><RouterLink to="/" class="brand" aria-label="项目工作台"><span class="brand-symbol"><AppIcon name="Layers" :size="22" /></span><span><strong>项目工作台</strong><small>LOCAL WORKSPACE</small></span></RouterLink><button class="icon-button sidebar-toggle" :disabled="sidebar.busy.value" :title="sidebar.collapsed.value ? '展开项目栏' : '收起项目栏'" :aria-label="sidebar.collapsed.value ? '展开项目栏' : '收起项目栏'" :aria-expanded="!sidebar.collapsed.value" aria-controls="project-sidebar" @click="ws.task('调整项目栏', sidebar.toggle)"><AppIcon :name="sidebar.collapsed.value ? 'ChevronRight' : 'ChevronLeft'" :size="16" /></button></div>
+      <div class="sidebar-header"><RouterLink to="/" class="brand" aria-label="项目工作台"><span class="brand-symbol"><AppLogo /></span><span><strong>项目工作台</strong><small>LOCAL WORKSPACE</small></span></RouterLink><button class="icon-button sidebar-toggle" :disabled="sidebar.busy.value" :title="sidebar.collapsed.value ? '展开项目栏' : '收起项目栏'" :aria-label="sidebar.collapsed.value ? '展开项目栏' : '收起项目栏'" :aria-expanded="!sidebar.collapsed.value" aria-controls="project-sidebar" @click="ws.task('调整项目栏', sidebar.toggle)"><AppIcon :name="sidebar.collapsed.value ? 'ChevronRight' : 'ChevronLeft'" :size="16" /></button></div>
       <div v-show="!sidebar.collapsed.value" class="sidebar-section-title"><span>工作空间</span><span class="count">{{ ws.projects.value.length }}</span></div>
       <div v-show="!sidebar.collapsed.value" class="sidebar-search"><AppIcon name="Search" :size="15" /><input ref="searchInput" v-model="search" aria-label="搜索项目" placeholder="搜索项目…" /></div>
       <div v-show="!sidebar.collapsed.value" class="sidebar-filters"><button :class="{ active: !favorites }" @click="favorites = false">所有项目</button><button :class="{ active: favorites }" @click="favorites = true"><AppIcon name="Star" :size="12" />收藏</button></div>
