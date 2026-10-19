@@ -17,6 +17,7 @@
 .sidebar-collapsed .project-list { padding: 0 6px; }
 .sidebar-collapsed .project-item { min-height: 42px; margin-bottom: 6px; }
 .sidebar-collapsed .project-link { justify-content: center; min-height: 40px; padding: 8px 0; }
+.sidebar-collapsed .project-link > svg { width: 28px; height: 28px; padding: 5px; }
 .sidebar-collapsed .project-link > span, .sidebar-collapsed .sidebar-label { display: none; }
 .sidebar-collapsed .sidebar-empty { padding: 10px 0; text-align: center; }
 .sidebar-collapsed .sidebar-add { gap: 4px; margin: 10px 8px 12px; padding-top: 10px; flex-shrink: 0; }

@@ -151,10 +151,10 @@ const handlers: Record<string, Handler> = {
   },
   'files:clipboard:read': () => readFileClipboard(),
   'files:clipboard:write': async payload => {
-    const v = file.extend({ path: z.string().min(1).max(4096) }).parse(payload);
-    const source = await withinProject(store.get(v.projectId).path, v.path);
-    await checkFileCopy(store.get(v.projectId).path, '', [source]);
-    await writeFileClipboard(source);
+    const v = pid.extend({ paths: z.array(z.string().min(1).max(4096)).min(1).max(200) }).parse(payload);
+    const sources = await Promise.all(v.paths.map(relative => withinProject(store.get(v.projectId).path, relative)));
+    await checkFileCopy(store.get(v.projectId).path, '', sources);
+    await writeFileClipboard([...new Set(sources)]);
   },
   'files:copy:check': async payload => {
     const v = copyRequest.parse(payload);

@@ -32,3 +32,10 @@
 .file-delete-warning li { overflow-wrap: anywhere; }
 .button.file-delete-confirm { background: var(--danger-soft); border-color: var(--danger-line); color: var(--danger); }
 .button.file-delete-confirm:not(:disabled):hover { background: var(--danger-soft); border-color: var(--danger); }
+.file-tree-row { user-select: none; }
+.file-tree-row.file-current:not(.selected) .tree-file-icon { color: var(--accent); }
+.file-selection-status { display: flex; align-items: center; gap: 5px; flex-shrink: 0; min-height: 31px; padding: 3px 9px; border-top: 1px solid var(--line); background: var(--glass-chrome); color: var(--secondary); font-size: 11px; }
+.file-selection-status > span { flex: 1; }
+.file-delete-targets { max-height: 240px; overflow: auto; margin-bottom: 14px; }
+.file-delete-targets .file-delete-target:last-child { margin-bottom: 0; }
+.file-delete-error { white-space: pre-wrap; margin-top: 12px; }

@@ -11,34 +11,42 @@ import { useFileSplitResize } from '@/composables/useFileSplitResize';
 import { useRepositoryGuard, useRepositoryState } from '@/composables/useRepositoryState';
 import { request } from '@/api/desktop';
 import type { Project, FileEntry } from '@/types';
+import { topLevelFileEntries } from '../../../shared/file-selection';
 
 const props = withDefaults(defineProps<{ project: Project; visible?: boolean }>(), { visible: true });
 const ws = useWorkspace(); const tabs = useFileTabs(props.project.id);
 const repository = useRepositoryState(props.project.id);
 const fileTree = ref<InstanceType<typeof FileTree>>();
-const removal = ref<FileEntry>(); const deleting = ref(false); const deleteError = ref('');
-const dirtyRemovalNames = computed(() => removal.value ? tabs.affectedDocuments(removal.value.path).filter(isDocumentDirty).map(document => document.entry.path) : []);
+const removal = ref<FileEntry[]>(); const deleting = ref(false); const deleteError = ref(''); const deleteProgress = ref(0);
+const affectedRemovalDocuments = computed(() => [...new Map((removal.value ?? []).flatMap(entry => tabs.affectedDocuments(entry.path)).map(document => [document.entry.path, document])).values()]);
+const dirtyRemovalNames = computed(() => affectedRemovalDocuments.value.filter(isDocumentDirty).map(document => document.entry.path));
 useRepositoryGuard(props.project.id, () => {
   if (removal.value || deleting.value) { ws.notify('请先完成文件删除操作，再切换分支'); return false; }
   return true;
 });
-function requestRemoval(entry: FileEntry) {
-  if (!entry.path || repository.busy.value || deleting.value) return;
-  if (tabs.affectedDocuments(entry.path).some(document => document.saving)) { ws.notify('文件正在保存，请稍后删除'); return; }
-  deleteError.value = ''; removal.value = entry;
+function requestRemoval(input: FileEntry[]) {
+  const entries = topLevelFileEntries(input);
+  if (!entries.length || repository.busy.value || deleting.value) return;
+  if (entries.some(entry => tabs.affectedDocuments(entry.path).some(document => document.saving))) { ws.notify('文件正在保存，请稍后删除'); return; }
+  deleteError.value = ''; deleteProgress.value = 0; removal.value = entries;
 }
 async function deleteEntry() {
-  const entry = removal.value; if (!entry || deleting.value) return;
-  if (tabs.affectedDocuments(entry.path).some(document => document.saving)) { ws.notify('文件正在保存，请稍后删除'); return; }
-  deleting.value = true; deleteError.value = '';
+  const entries = removal.value; if (!entries?.length || deleting.value) return;
+  if (affectedRemovalDocuments.value.some(document => document.saving)) { ws.notify('文件正在保存，请稍后删除'); return; }
+  deleting.value = true; deleteError.value = ''; deleteProgress.value = 0;
+  const removed: string[] = []; const failures: { entry: FileEntry; message: string }[] = [];
   try {
-    await request('files:delete', { projectId: props.project.id, path: entry.path, directory: entry.directory });
-    tabs.removePath(entry.path); removal.value = undefined;
-    await fileTree.value?.afterDelete(entry.path);
-    ws.notify(`已移入回收站：${entry.name}`);
-  } catch (error) {
-    deleteError.value = error instanceof Error ? error.message : String(error);
-    ws.notify(deleteError.value, 'error'); await fileTree.value?.refresh();
+    for (const entry of entries) {
+      try {
+        await request('files:delete', { projectId: props.project.id, path: entry.path, directory: entry.directory });
+        tabs.removePath(entry.path); removed.push(entry.path);
+      } catch (error) { failures.push({ entry, message: error instanceof Error ? error.message : String(error) }); }
+      deleteProgress.value++;
+    }
+    if (removed.length) await fileTree.value?.afterDelete(removed); else await fileTree.value?.refresh();
+    removal.value = failures.length ? failures.map(failure => failure.entry) : undefined;
+    deleteError.value = failures.map(failure => `${failure.entry.path}：${failure.message}`).join('\n');
+    ws.notify(`已移入回收站 ${removed.length} 项${failures.length ? `，${failures.length} 项失败\n${deleteError.value}` : ''}`, failures.length ? 'error' : 'success');
   } finally { deleting.value = false; }
 }
 const tabBar = ref<HTMLElement>();
@@ -89,5 +97,5 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', shortcut); window.
       </div>
     </div>
   </section>
-  <FileDeleteDialog v-if="removal && visible" :entry="removal" :dirty-names="dirtyRemovalNames" :busy="deleting" :error="deleteError" @close="removal = undefined" @confirm="deleteEntry" />
+  <FileDeleteDialog v-if="removal && visible" :entries="removal" :dirty-names="dirtyRemovalNames" :busy="deleting" :progress="deleteProgress" :error="deleteError" @close="removal = undefined" @confirm="deleteEntry" />
 </template>

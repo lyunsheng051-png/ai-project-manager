@@ -7,15 +7,18 @@ import FileCopyConflictDialog from './FileCopyConflictDialog.vue';
 import { fileDragType, useFileTransfer } from '@/composables/useFileTransfer';
 import { useRepositoryState } from '@/composables/useRepositoryState';
 import { useFileTree, type FileTreeRow } from '@/composables/useFileTree';
+import { useFileSelection } from '@/composables/useFileSelection';
 import { fileSize } from '@/config/display';
 import type { Project, FileEntry, FileCreationKind } from '@/types';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { gitDecorations, gitToneLabels } from '@/config/gitDecorations';
-import { isImageFile } from '../../../shared/file-kinds';
+import { fileIcon } from '@/config/fileIcons';
+import { topLevelFileEntries } from '../../../shared/file-selection';
 
 const props = defineProps<{ project: Project; selectedPath?: string }>();
-const emit = defineEmits<{ select: [entry: FileEntry]; remove: [entry: FileEntry] }>();
+const emit = defineEmits<{ select: [entry: FileEntry]; remove: [entries: FileEntry[]] }>();
 const tree = useFileTree(props.project); const element = ref<HTMLElement>(); const focusedPath = ref('');
+const selection = useFileSelection(tree.rows, tree.refreshing);
 const ws = useWorkspace();
 const repository = useRepositoryState(props.project.id);
 const creation = ref<{ kind: FileCreationKind; parentPath: string }>();
@@ -24,6 +27,7 @@ const dragTarget = ref<string>();
 const transfer = useFileTransfer(props.project, async entries => {
   await tree.revealEntries(entries); await ws.refreshGit();
   if (entries[0]) {
+    selection.replace(entries[0].path); for (const entry of entries) selection.paths.add(entry.path);
     await focus(entries[0].path);
     if (entries.length === 1 && !entries[0].directory) emit('select', entries[0]);
   }
@@ -38,6 +42,7 @@ function startCreate(kind: FileCreationKind, entry = tree.rows.value.find(row =>
 function showContext(event: MouseEvent, entry = tree.rows.value[0]!.entry) {
   if (tree.refreshing.value || creation.value || transfer.blocked.value) return;
   focusedPath.value = entry.path;
+  if (!selection.paths.has(entry.path)) selection.replace(entry.path);
   contextMenu.value = { x: event.clientX, y: event.clientY, entry };
 }
 function closeMenu(restoreFocus: boolean) {
@@ -45,8 +50,12 @@ function closeMenu(restoreFocus: boolean) {
   if (restoreFocus && path !== undefined) void focus(path);
 }
 function copyEntry(entry = tree.rows.value.find(row => row.entry.path === focusedPath.value)?.entry) {
+  const entries = actionEntries(entry);
   contextMenu.value = undefined;
-  if (entry?.path) void transfer.copy(entry);
+  if (entries.length) void transfer.copy(entries);
+}
+function actionEntries(entry?: FileEntry) {
+  return topLevelFileEntries(entry && selection.paths.has(entry.path) ? selection.entries.value : entry?.path ? [entry] : []);
 }
 function pasteEntry(entry = tree.rows.value.find(row => row.entry.path === focusedPath.value)?.entry) {
   const target = parentPath(entry); contextMenu.value = undefined;
@@ -54,18 +63,24 @@ function pasteEntry(entry = tree.rows.value.find(row => row.entry.path === focus
 }
 function removeEntry(entry = tree.rows.value.find(row => row.entry.path === focusedPath.value)?.entry) {
   contextMenu.value = undefined;
-  if (entry?.path && !transfer.blocked.value && !tree.refreshing.value && !creation.value) emit('remove', entry);
+  const entries = actionEntries(entry);
+  if (entries.length && !transfer.blocked.value && !tree.refreshing.value && !creation.value) emit('remove', entries);
 }
-async function afterDelete(path: string) {
+async function afterDelete(input: string | string[]) {
+  const paths = Array.isArray(input) ? input : [input];
   contextMenu.value = undefined;
-  for (const expanded of tree.expanded) if (expanded === path || expanded.startsWith(`${path}/`)) tree.expanded.delete(expanded);
-  await refresh(); await focus(path.split('/').slice(0, -1).join('/'));
+  for (const expanded of tree.expanded) if (paths.some(path => expanded === path || expanded.startsWith(`${path}/`))) tree.expanded.delete(expanded);
+  const parent = paths[0]?.split('/').slice(0, -1).join('/') ?? '';
+  await refresh(); selection.replace(parent); await focus(parent);
 }
 function startDrag(event: DragEvent, entry: FileEntry) {
   if (!entry.path || transfer.blocked.value || creation.value || !event.dataTransfer) { event.preventDefault(); return; }
   contextMenu.value = undefined;
+  if (!selection.paths.has(entry.path)) selection.replace(entry.path);
+  const entries = actionEntries(entry);
+  if (entries.length > 200) { event.preventDefault(); ws.notify('一次最多拖动 200 项，请分批操作', 'error'); return; }
   event.dataTransfer.effectAllowed = 'copy';
-  event.dataTransfer.setData(fileDragType, JSON.stringify({ projectId: props.project.id, path: entry.path }));
+  event.dataTransfer.setData(fileDragType, JSON.stringify(entries.map(item => ({ projectId: props.project.id, path: item.path }))));
 }
 function dragOver(event: DragEvent, entry = tree.rows.value[0]!.entry) {
   if (!transfer.canDrop(event.dataTransfer) || tree.refreshing.value || creation.value) {
@@ -87,13 +102,15 @@ function closeCreation() {
 }
 async function created(entry: FileEntry) {
   creation.value = undefined;
-  await tree.revealCreated(entry); await ws.refreshGit(); await focus(entry.path);
+  await tree.revealCreated(entry); await ws.refreshGit(); selection.replace(entry.path); await focus(entry.path);
   if (!entry.directory) emit('select', entry);
 }
 async function refresh() { await Promise.all([tree.refresh(), ws.refreshGit()]); }
 watch(tree.rows, rows => { if (!rows.some(row => row.entry.path === focusedPath.value)) focusedPath.value = ''; });
-function choose(row: FileTreeRow) {
+function choose(row: FileTreeRow, event: MouseEvent | KeyboardEvent) {
   focusedPath.value = row.entry.path;
+  selection.select(row.entry.path, event);
+  if (event.ctrlKey || event.metaKey || event.shiftKey) return;
   if (row.entry.directory) void tree.toggle(row.entry); else emit('select', row.entry);
 }
 async function focus(path: string) {
@@ -101,6 +118,10 @@ async function focus(path: string) {
   [...(element.value?.querySelectorAll<HTMLButtonElement>('[role="treeitem"]') ?? [])].find(item => item.dataset.path === path)?.focus();
 }
 async function keydown(event: KeyboardEvent, row: FileTreeRow) {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') { event.preventDefault(); selection.all(); return; }
+  if (event.key === 'Escape') { event.preventDefault(); selection.replace(); return; }
+  if (event.key === ' ') { event.preventDefault(); selection.select(row.entry.path, event); return; }
+  if (event.key === 'Enter') { event.preventDefault(); choose(row, event); return; }
   if (event.key === 'Delete' && !event.altKey && !event.ctrlKey && !event.metaKey) {
     event.preventDefault(); removeEntry(row.entry); return;
   }
@@ -113,21 +134,26 @@ async function keydown(event: KeyboardEvent, row: FileTreeRow) {
     event.preventDefault();
     if (!tree.refreshing.value && !creation.value && !transfer.blocked.value) {
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      if (!selection.paths.has(row.entry.path)) selection.replace(row.entry.path);
       contextMenu.value = { x: rect.left + 24, y: rect.bottom, entry: row.entry };
     }
     return;
   }
   if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
   event.preventDefault(); const rows = tree.rows.value; const index = rows.findIndex(item => item.entry.path === row.entry.path);
-  if (event.key === 'Home') await focus(rows[0]!.entry.path);
-  else if (event.key === 'End') await focus(rows.at(-1)!.entry.path);
-  else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') await focus(rows[Math.max(0, Math.min(rows.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1)))]!.entry.path);
+  async function move(path: string) {
+    if (event.shiftKey || (!event.ctrlKey && !event.metaKey)) selection.select(path, event);
+    await focus(path);
+  }
+  if (event.key === 'Home') await move(rows[0]!.entry.path);
+  else if (event.key === 'End') await move(rows.at(-1)!.entry.path);
+  else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') await move(rows[Math.max(0, Math.min(rows.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1)))]!.entry.path);
   else if (event.key === 'ArrowRight' && row.entry.directory) {
     if (!tree.expanded.has(row.entry.path) || tree.errors.has(row.entry.path)) await tree.toggle(row.entry);
-    else if (rows[index + 1]?.depth === row.depth + 1) await focus(rows[index + 1]!.entry.path);
+    else if (rows[index + 1]?.depth === row.depth + 1) await move(rows[index + 1]!.entry.path);
   } else if (event.key === 'ArrowLeft') {
     if (row.entry.directory && tree.expanded.has(row.entry.path)) tree.expanded.delete(row.entry.path);
-    else await focus(row.entry.path.split('/').slice(0, -1).join('/'));
+    else await move(row.entry.path.split('/').slice(0, -1).join('/'));
   }
 }
 onMounted(refresh);
@@ -137,18 +163,19 @@ defineExpose({ refresh, afterDelete });
 <template>
   <div class="file-tree-panel" :class="{ 'is-file-drop-target': dragTarget !== undefined }">
     <div class="file-tree-toolbar"><span>项目文件</span><div><button class="pane-action icon-only" :disabled="tree.refreshing.value || transfer.blocked.value" aria-label="新建文件" title="在当前目录新建文件（Alt+Insert）" @click="startCreate('file')"><AppIcon name="FilePlus" :size="14" /></button><button class="pane-action icon-only" :disabled="tree.refreshing.value || transfer.blocked.value" aria-label="新建目录" title="在当前目录新建目录" @click="startCreate('directory')"><AppIcon name="FolderPlus" :size="14" /></button><button class="pane-action icon-only" aria-label="全部收起" title="收起所有子目录" @click="tree.collapseAll"><AppIcon name="Folder" :size="14" /></button><button class="pane-action icon-only" :disabled="tree.refreshing.value || transfer.blocked.value" aria-label="刷新目录" title="刷新目录与 Git 状态，保留展开状态" @click="refresh"><AppIcon name="RefreshCw" :size="14" :class="{ spin: tree.refreshing.value }" /></button></div></div>
-    <div ref="element" class="file-tree" role="tree" aria-label="项目文件目录" @paste.prevent="pasteEntry()" @copy.prevent="copyEntry()" @contextmenu.prevent="showContext($event)" @dragover.prevent="dragOver($event)" @drop.prevent="drop($event)" @dragleave="dragLeave" @dragend="dragTarget = undefined">
-      <button v-for="row in tree.rows.value" :key="row.entry.path" class="file-tree-row" :class="{ selected: !row.entry.directory && selectedPath === row.entry.path, root: !row.entry.path, 'has-error': tree.errors.has(row.entry.path), 'context-target': contextMenu?.entry.path === row.entry.path, 'file-drop-target': row.entry.directory && dragTarget === row.entry.path }" role="treeitem" :aria-label="row.entry.name" :aria-level="row.depth" :aria-expanded="row.entry.directory ? tree.expanded.has(row.entry.path) : undefined" :aria-selected="!row.entry.directory && selectedPath === row.entry.path" :aria-busy="tree.pending.has(row.entry.path) || undefined" :tabindex="focusedPath === row.entry.path ? 0 : -1" :data-path="row.entry.path" :title="tree.errors.get(row.entry.path) || row.entry.path || project.path" :style="{ paddingLeft: `${8 + (row.depth - 1) * 16}px` }" @focus="focusedPath = row.entry.path" @click="choose(row)" @keydown="keydown($event, row)" @contextmenu.prevent.stop="showContext($event, row.entry)" :draggable="Boolean(row.entry.path) && !transfer.blocked.value" @dragstart="startDrag($event, row.entry)" @dragover.prevent.stop="dragOver($event, row.entry)" @drop.prevent.stop="drop($event, row.entry)">
-        <AppIcon v-if="row.entry.directory" :name="tree.pending.has(row.entry.path) ? 'Loader' : tree.errors.has(row.entry.path) ? 'RefreshCw' : tree.expanded.has(row.entry.path) ? 'ChevronDown' : 'ChevronRight'" :size="12" class="tree-chevron" :class="{ spin: tree.pending.has(row.entry.path) }" /><span v-else class="tree-chevron-placeholder" />
-        <AppIcon :name="row.entry.directory ? tree.expanded.has(row.entry.path) ? 'FolderOpen' : 'Folder' : isImageFile(row.entry.name) ? 'Image' : 'FileText'" :size="15" :class="row.entry.directory ? 'tree-folder-icon' : 'tree-file-icon'" />
+    <div ref="element" class="file-tree" role="tree" aria-multiselectable="true" aria-label="项目文件目录" @paste.prevent="pasteEntry()" @copy.prevent="copyEntry()" @contextmenu.prevent="showContext($event)" @dragover.prevent="dragOver($event)" @drop.prevent="drop($event)" @dragleave="dragLeave" @dragend="dragTarget = undefined">
+      <button v-for="row in tree.rows.value" :key="row.entry.path" class="file-tree-row" :class="{ selected: selection.paths.has(row.entry.path), 'file-current': !row.entry.directory && selectedPath === row.entry.path, root: !row.entry.path, 'has-error': tree.errors.has(row.entry.path), 'context-target': contextMenu?.entry.path === row.entry.path, 'file-drop-target': row.entry.directory && dragTarget === row.entry.path }" role="treeitem" :aria-label="row.entry.name" :aria-level="row.depth" :aria-expanded="row.entry.directory ? tree.expanded.has(row.entry.path) : undefined" :aria-selected="selection.paths.has(row.entry.path)" :aria-busy="tree.pending.has(row.entry.path) || undefined" :tabindex="focusedPath === row.entry.path ? 0 : -1" :data-path="row.entry.path" :title="tree.errors.get(row.entry.path) || row.entry.path || project.path" :style="{ paddingLeft: `${8 + (row.depth - 1) * 16}px` }" @focus="focusedPath = row.entry.path" @click="choose(row, $event)" @keydown="keydown($event, row)" @contextmenu.prevent.stop="showContext($event, row.entry)" :draggable="Boolean(row.entry.path) && !transfer.blocked.value" @dragstart="startDrag($event, row.entry)" @dragover.prevent.stop="dragOver($event, row.entry)" @drop.prevent.stop="drop($event, row.entry)">
+        <AppIcon v-if="row.entry.directory" :name="tree.pending.has(row.entry.path) ? 'Loader' : tree.errors.has(row.entry.path) ? 'RefreshCw' : tree.expanded.has(row.entry.path) ? 'ChevronDown' : 'ChevronRight'" :size="12" class="tree-chevron" :class="{ spin: tree.pending.has(row.entry.path) }" @click.stop="tree.toggle(row.entry)" /><span v-else class="tree-chevron-placeholder" />
+        <AppIcon :name="row.entry.directory ? tree.expanded.has(row.entry.path) ? 'FolderOpen' : 'Folder' : fileIcon(row.entry.name).name" :size="15" :class="row.entry.directory ? 'tree-folder-icon' : 'tree-file-icon'" :data-file-tone="row.entry.directory ? undefined : fileIcon(row.entry.name).tone" />
         <span class="tree-entry-name" :class="`git-${tone(row.entry.path)}`" :title="`${row.entry.path || project.path} · ${gitToneLabels[tone(row.entry.path)]}`">{{ row.entry.name }}</span>
         <span v-if="tree.errors.has(row.entry.path)" class="tree-note">读取失败，点击重试</span><span v-else-if="row.entry.directory && tree.expanded.has(row.entry.path) && tree.children.has(row.entry.path) && !tree.children.get(row.entry.path)!.length" class="tree-note">空</span>
         <small v-else-if="!row.entry.directory">{{ fileSize(row.entry.size) }}</small>
       </button>
     </div>
+    <div v-if="selection.entries.value.length > 1" class="file-selection-status" role="status"><span>已选择 {{ selection.entries.value.length }} 项</span><button class="pane-action icon-only" :disabled="transfer.blocked.value || tree.refreshing.value" title="复制所选项" aria-label="复制所选项" @click="transfer.copy(selection.entries.value)"><AppIcon name="Copy" :size="14" /></button><button class="pane-action icon-only danger-text" :disabled="transfer.blocked.value || tree.refreshing.value" title="删除所选项" aria-label="删除所选项" @click="removeEntry(selection.entries.value[0])"><AppIcon name="Trash2" :size="14" /></button></div>
     <div v-if="dragTarget !== undefined || transfer.busy.value" class="file-transfer-status" role="status"><AppIcon :name="transfer.busy.value ? 'Loader' : 'Copy'" :size="14" :class="{ spin: transfer.busy.value }" /><span>{{ transfer.busy.value ? transfer.activity.value : `复制到 ${project.name}${dragTarget ? `/${dragTarget}` : ''}` }}</span></div>
     <FileCopyConflictDialog v-if="transfer.pending.value" :location="`${project.name}${transfer.pending.value.request.path ? `/${transfer.pending.value.request.path}` : ''}`" :total="transfer.pending.value.check.names.length" :conflicts="transfer.pending.value.check.conflicts" @close="transfer.cancel" @confirm="transfer.accept" />
-    <FileTreeContextMenu v-if="contextMenu" :x="contextMenu.x" :y="contextMenu.y" :location="`${project.name}${parentPath(contextMenu.entry) ? `/${parentPath(contextMenu.entry)}` : ''}`" :can-copy="Boolean(contextMenu.entry.path)" @create="startCreate($event, contextMenu?.entry)" @close="closeMenu" @copy="copyEntry(contextMenu?.entry)" @paste="pasteEntry(contextMenu?.entry)" @remove="removeEntry(contextMenu?.entry)" />
+    <FileTreeContextMenu v-if="contextMenu" :x="contextMenu.x" :y="contextMenu.y" :location="`${project.name}${parentPath(contextMenu.entry) ? `/${parentPath(contextMenu.entry)}` : ''}`" :can-copy="Boolean(contextMenu.entry.path)" :selection-count="selection.entries.value.length" @create="startCreate($event, contextMenu?.entry)" @close="closeMenu" @copy="copyEntry(contextMenu?.entry)" @paste="pasteEntry(contextMenu?.entry)" @remove="removeEntry(contextMenu?.entry)" />
     <NewFileDialog v-if="creation" :project="project" :parent-path="creation.parentPath" :kind="creation.kind" @close="closeCreation" @created="created" />
   </div>
 </template>

@@ -84,7 +84,7 @@ export interface ActionPayloads {
   'files:create': { projectId: string; path: string; name: string; kind: FileCreationKind };
   'files:delete': { projectId: string; path: string; directory: boolean };
   'files:clipboard:read': undefined;
-  'files:clipboard:write': { projectId: string; path: string };
+  'files:clipboard:write': { projectId: string; paths: string[] };
   'files:copy:check': FileCopyRequest;
   'files:copy': FileCopyRequest & { conflict: FileCopyConflict };
   'files:read': { projectId: string; path: string };

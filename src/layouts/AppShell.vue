@@ -18,7 +18,8 @@ const search = ref(''); const cloneOpen = ref(false); const favorites = ref(fals
 const removingId = ref('');
 const filtered = computed(() => ws.projects.value.filter(p => (!favorites.value || p.favorite)
   && `${p.name} ${p.path}`.toLowerCase().includes(search.value.toLowerCase()))
-  .sort((a, b) => Number(b.favorite) - Number(a.favorite) || b.lastOpened.localeCompare(a.lastOpened)));
+  // 收藏分组内保持原有顺序，打开项目不触发重新排序。
+  .sort((a, b) => Number(b.favorite) - Number(a.favorite)));
 const pager = usePagination(() => filtered.value);
 async function expandSearch() {
   await ws.task('展开项目栏', () => sidebar.setCollapsed(false));

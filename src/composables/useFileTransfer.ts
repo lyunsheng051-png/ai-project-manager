@@ -2,6 +2,7 @@ import { computed, onBeforeUnmount, ref } from 'vue';
 import { request } from '@/api/desktop';
 import { useWorkspace } from './useWorkspace';
 import { useRepositoryGuard } from './useRepositoryState';
+import { topLevelFileEntries } from '../../shared/file-selection';
 import type { FileCopyCheck, FileCopyConflict, FileCopyRequest, FileCopySource, FileEntry, Project } from '@/types';
 
 export const fileDragType = 'application/x-aipm-file';
@@ -47,12 +48,14 @@ export function useFileTransfer(project: Project, completed: (entries: FileEntry
     const input = pending.value?.request; pending.value = undefined;
     if (input) await execute(input, conflict);
   }
-  async function copy(entry: FileEntry) {
-    if (blocked.value || !entry.path) return;
+  async function copy(input: FileEntry | FileEntry[]) {
+    const entries = topLevelFileEntries(Array.isArray(input) ? input : [input]);
+    if (blocked.value || !entries.length) return;
+    if (entries.length > 200) { ws.notify('一次最多复制 200 项，请分批操作', 'error'); return; }
     busy.value = true; activity.value = '正在复制到文件剪贴板…';
     try {
-      await request('files:clipboard:write', { projectId: project.id, path: entry.path });
-      ws.notify(`已复制 ${entry.name}，到目标目录按 Ctrl+V 粘贴`);
+      await request('files:clipboard:write', { projectId: project.id, paths: entries.map(entry => entry.path) });
+      ws.notify(`已复制${entries.length === 1 ? ` ${entries[0]!.name}` : ` ${entries.length} 项`}，到目标目录按 Ctrl+V 粘贴`);
     } catch (error) { ws.notify(error instanceof Error ? error.message : String(error), 'error'); }
     finally { busy.value = false; activity.value = ''; }
   }
@@ -75,9 +78,11 @@ export function useFileTransfer(project: Project, completed: (entries: FileEntry
     try {
       const internal = data.getData(fileDragType);
       if (internal) {
-        const source: unknown = JSON.parse(internal);
-        if (!source || typeof source !== 'object' || !('projectId' in source) || !('path' in source) || typeof source.projectId !== 'string' || typeof source.path !== 'string') throw new Error('拖动的项目文件无效');
-        await offer([{ projectId: source.projectId, path: source.path }], path);
+        const decoded: unknown = JSON.parse(internal);
+        const sources: unknown[] = Array.isArray(decoded) ? decoded : [decoded];
+        const valid = (source: unknown): source is { projectId: string; path: string } => Boolean(source && typeof source === 'object' && 'projectId' in source && 'path' in source && typeof source.projectId === 'string' && typeof source.path === 'string');
+        if (!sources.length || !sources.every(valid)) throw new Error('拖动的项目文件无效');
+        await offer(sources, path);
       } else {
         if (!window.desktop?.getPathForFile) throw new Error('请重启桌面端后使用拖入文件功能');
         const paths = Array.from(data.files).map(file => window.desktop!.getPathForFile!(file));

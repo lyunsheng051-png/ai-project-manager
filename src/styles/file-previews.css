@@ -4,6 +4,13 @@
 .tree-entry-name.git-modified, .change-row.git-modified .mono, .change-row.git-modified .file-status { color: var(--accent); }
 .change-row.git-normal .file-status { color: var(--muted); }
 
+.tree-file-icon[data-file-tone='code'] { color: var(--accent); }
+.tree-file-icon[data-file-tone='config'] { color: var(--warning); }
+.tree-file-icon[data-file-tone='document'] { color: var(--violet); }
+.tree-file-icon[data-file-tone='data'] { color: var(--teal); }
+.tree-file-icon[data-file-tone='image'] { color: var(--pink); }
+.tree-file-icon[data-file-tone='text'] { color: var(--secondary); }
+
 .file-columns { grid-template-rows: minmax(0, 1fr); }
 .file-columns > .file-list-column { border: 0; }
 .file-split-resizer { position: relative; z-index: 2; cursor: ew-resize; touch-action: none; outline: none; background: var(--line); }
@@ -14,6 +21,8 @@
 .file-tabs { display: flex; align-items: stretch; flex-shrink: 0; min-height: 35px; overflow-x: auto; background: var(--editor-chrome); border-bottom: 1px solid var(--line); }
 .file-tab { display: flex; align-items: center; flex-shrink: 0; max-width: 240px; padding-right: 5px; border-top: 2px solid transparent; border-right: 1px solid var(--line); color: var(--secondary); }
 .file-tab.active { color: var(--ink); background: var(--editor); border-top-color: var(--accent); }
+.file-tab:not(.active):hover { color: var(--ink); background: var(--control-hover); }
+.file-tab > button[role='tab'] > svg { color: var(--accent); }
 .file-tab > button[role='tab'] { display: flex; align-items: center; gap: 7px; min-width: 0; height: 32px; padding: 0 9px 1px 12px; color: inherit; font-size: 12px; }
 .file-tab > button[role='tab'] > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-tab-close { display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; padding: 0; color: var(--secondary); border-radius: 4px; }
