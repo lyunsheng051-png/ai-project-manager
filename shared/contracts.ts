@@ -47,6 +47,7 @@ export type DesktopEvent =
   | { type: 'terminal-exit'; id: string; exitCode: number }
   | { type: 'projects'; projects: Project[] };
 export interface ActionPayloads {
+  'app:quit': undefined;
   bootstrap: undefined;
   'theme:get': undefined;
   'theme:set': { theme: ThemeMode };
@@ -101,6 +102,7 @@ export interface ActionPayloads {
   metrics: undefined;
 }
 export interface ActionResults {
+  'app:quit': void;
   bootstrap: Bootstrap;
   'theme:get': ThemeMode;
   'theme:set': ThemeMode;

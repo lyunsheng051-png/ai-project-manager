@@ -42,6 +42,7 @@ Project Workbench brings these recurring tasks together. It remembers each repos
 | Git | View diffs, stage, commit, switch branches, fetch, pull, merge upstream, and push |
 | Merge conflicts | Dedicated three-pane dialog, conflict navigation, accept or reject changes, edit the result, and undo actions |
 | Logs and terminals | Filter, copy, and follow logs; use multiple PTY terminals and resize the output panel |
+| Background operation | Close to the system tray while preserving services, terminals, and editor state; click the tray icon to restore |
 | Appearance | Light and dark themes, glass panels, and distinct action colors |
 
 ### Run multiple services together
@@ -131,7 +132,9 @@ npm run dev:desktop
 
 The first installation requires network access to download Electron. Once dependencies are installed, you can also double-click `start.cmd` in the repository root.
 
-A standalone desktop window opens. The development launcher selects an available local port for the UI server and shuts it down when the client exits.
+A standalone desktop window opens. The development launcher selects an available local port for the UI server. Closing the window hides it to the system tray, preserving running services, terminals, and unsaved edits. Click the tray icon or open the shortcut again to restore the window.
+
+To quit completely, choose “退出工作台” (Exit Workbench) from the tray context menu or use the exit button in Settings. The app checks for unsaved changes before stopping its managed services and terminals. In development, the UI server also stops when the app exits.
 
 ### First session
 
@@ -158,6 +161,8 @@ Windows service commands and interactive terminals use `cmd.exe` by default. Run
 | Switch local branches | Click the branch name in the project header |
 | Resize panels | Drag the file divider or output panel's top divider; double-click to reset |
 | Switch theme | Sun / moon button at the bottom of the sidebar |
+| Hide to tray / restore | Window close button or `Alt+F4` / click the tray icon or open the shortcut again |
+| Quit completely | Exit Workbench in the tray context menu or Settings |
 
 ## Development
 

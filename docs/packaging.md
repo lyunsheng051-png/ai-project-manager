@@ -59,3 +59,25 @@ Packaged apps serve their bundled renderer through `aipm://app/` without a Vite 
 安装版打开工作台不依赖 Node.js、npm、Python 或 Java；Git 操作仍要求本机安装 Git，启动项目服务仍要求对应开发环境。安装包不会安装或覆盖这些环境，也不会包含作者的项目记录、个人配置或业务仓库。
 
 Opening the installed workbench does not require Node.js, npm, Python, or Java. Git operations require system Git, and project service commands require their own runtimes. The installer does not install those runtimes or include personal workspace data.
+
+## 体积优化 / Package size
+
+安装包包含 Electron 自带的 Chromium 和 Node.js 运行时，因此主要体积来自 Electron，而不是业务代码。安装包的压缩体积与安装后的占用不同，不能直接比较。
+
+Electron includes Chromium and Node.js, which account for most of the distribution. Compressed installer size and installed size measure different things.
+
+当前发行流程默认进行以下裁剪：
+
+- Electron 语言资源只保留 `zh-CN`、`en-US`，保留英文回退；这不会限制项目文件中的 Unicode 文本。
+- node-pty 保留运行所需 JavaScript、Worker 和原生组件，排除测试和 source map，不分发仅供编译使用的 node-addon-api 头文件。
+- 主进程代码压缩；渲染端不生成 source map。
+- Inno Setup 使用 `lzma2/ultra64` 固实压缩，提升压缩率；构建耗时和压缩、解压时的内存需求会相应增加。
+- 保留图形加速与软件渲染回退组件、媒体库以及第三方许可证。
+
+The release keeps Simplified Chinese and US English locale resources, omits PTY tests, source maps and compile-time headers, minifies the main process, and uses solid LZMA2 ultra64 compression. Graphics support, software-rendering fallbacks, media libraries, and license notices are retained. Higher compression trades build time and compression/decompression memory for a smaller installer.
+
+每次构建额外输出 `release/AIProjectManager-版本号-sizes.json`，记录安装包、安装目录、应用内容和语言包的实际字节数，方便后续比较。若要新增 Electron 原生语言，在打包脚本的 `electronLocales` 中补充对应 `.pak` 文件名。
+
+Each build writes `release/AIProjectManager-VERSION-sizes.json` with measured installer, application-directory, app-content, and locale sizes. Extend `electronLocales` in the packaging script when adding another Electron locale.
+
+压缩参数说明 / Compression reference: [Inno Setup Compression](https://jrsoftware.org/ishelp/topic_setup_compression.htm).

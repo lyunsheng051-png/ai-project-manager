@@ -14,6 +14,7 @@ import { ProcessService, orderServices } from './services/processes';
 import { listFiles, readTextFile, saveTextFile, readImageFile, createFileEntry } from './services/files';
 import { validateCloneName, withinProject } from './core/paths';
 import { registerRendererScheme, rendererUrl, isRendererNavigation, servePackagedRenderer } from './core/renderer';
+import { DesktopLifecycle } from './core/desktop-lifecycle';
 import type { DesktopEvent, ServiceProfile } from '../shared/contracts';
 
 if (process.env.AIPM_USER_DATA) app.setPath('userData', path.resolve(process.env.AIPM_USER_DATA));
@@ -48,7 +49,11 @@ function applyNativeTheme() {
 const git = new GitService();
 const emit = (event: DesktopEvent) => { if (window && !window.isDestroyed()) window.webContents.send('pm:event', event); };
 const processes = new ProcessService(emit);
-let quitting = false;
+const appIcon = path.join(app.getAppPath(), 'resources', process.platform === 'win32' ? 'icon.ico' : 'icon.png');
+const lifecycle = new DesktopLifecycle({
+  getWindow: () => window, revealWindow, icon: appIcon,
+  hasActive: () => processes.hasActive(), shutdown: () => processes.shutdown(),
+});
 const pid = z.object({ projectId: z.string().min(1).max(100) });
 const file = pid.extend({ path: z.string().max(4096) });
 const copyRequest = file.extend({ sources: z.array(z.union([
@@ -69,6 +74,7 @@ const serviceSchema = z.object({
 function publishProjects() { emit({ type: 'projects', projects: store.list() }); }
 type Handler = (payload: unknown) => unknown | Promise<unknown>;
 const handlers: Record<string, Handler> = {
+  'app:quit': () => { setImmediate(() => lifecycle.requestQuit()); },
   'theme:get': () => appearance.get(),
   'layout:sidebar:get': () => appearance.getSidebarCollapsed(),
   'layout:sidebar:set': payload => appearance.saveSidebarCollapsed(z.object({ collapsed: z.boolean() }).parse(payload).collapsed),
@@ -210,28 +216,18 @@ for (const operation of ['stage', 'unstage', 'commit', 'create-branch', 'switch'
 async function createWindow() {
   const url = rendererUrl();
   window = new BrowserWindow({ width: 1440, height: 940, minWidth: 1000, minHeight: 680, show: false,
-    icon: path.join(app.getAppPath(), 'resources', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
+    icon: appIcon,
     title: '项目工作台', backgroundColor: appearance.get() === 'light' ? '#edf3fa' : '#0b1220', autoHideMenuBar: true,
     ...(process.platform === 'win32' ? { titleBarStyle: 'hidden' as const, titleBarOverlay: titleBarColors() } : {}),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  window.webContents.on('will-prevent-unload', event => {
-    const choice = dialog.showMessageBoxSync(window!, { type: 'question', title: '未保存的文件',
-      message: '有尚未保存的文件修改', detail: '离开后这些修改将丢失。', buttons: ['继续编辑', '放弃修改并离开'], defaultId: 0, cancelId: 0 });
-    if (choice === 1) event.preventDefault();
-  });
+  lifecycle.attach(window);
   window.webContents.on('will-navigate', (event, target) => { if (!isRendererNavigation(target, url)) event.preventDefault(); });
   window.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
-  window.on('close', event => {
-    if (quitting || !processes.hasActive()) return;
-    event.preventDefault();
-    const choice = dialog.showMessageBoxSync(window!, { type: 'question', title: '关闭项目工作台',
-      message: '仍有服务或终端在运行', detail: '关闭时将停止由工作台启动的服务和终端。', buttons: ['停止并退出', '继续使用'], defaultId: 1, cancelId: 1 });
-    if (choice === 0) { quitting = true; void processes.shutdown().finally(() => app.quit()); }
-  });
   window.on('closed', () => { window = null; });
   await window.loadURL(url);
   revealWindow();
+  lifecycle.createTray();
   reportLaunch('desktop-ready', { pid: process.pid, visible: window.isVisible(), rendererUrl: url });
 }
 function revealWindow() {
@@ -256,9 +252,6 @@ app.whenReady().then(async () => {
   });
   await createWindow();
 }).catch(error => { dialog.showErrorBox('项目工作台启动失败', (error as Error).message); app.quit(); });
-app.on('window-all-closed', () => { if (!quitting) { quitting = true; void processes.shutdown().finally(() => app.quit()); } });
-app.on('before-quit', event => {
-  if (!quitting && processes.hasActive()) {
-    event.preventDefault(); quitting = true; void processes.shutdown().finally(() => app.quit());
-  }
-});
+app.on('window-all-closed', () => lifecycle.finishQuit());
+app.on('before-quit', event => lifecycle.beforeQuit(event));
+app.on('will-quit', () => lifecycle.dispose());

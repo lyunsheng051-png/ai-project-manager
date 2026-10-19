@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "0.1.0"
+  #define AppVersion "0.1.1"
 #endif
 #ifndef AppSource
   #define AppSource "..\release\AIProjectManager-win32-x64"
@@ -30,7 +30,8 @@ OutputBaseFilename=AIProjectManager-{#AppVersion}-Setup-x64
 SetupIconFile=..\resources\icon.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 LicenseFile=..\LICENSE
-Compression=lzma2
+Compression=lzma2/ultra64
+LZMAUseSeparateProcess=yes
 SolidCompression=yes
 WizardStyle=modern
 CloseApplications=yes

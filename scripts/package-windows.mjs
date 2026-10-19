@@ -1,7 +1,7 @@
 import { packager } from '@electron/packager';
 import { build as buildRenderer } from 'vite';
 import { build as bundleMain } from 'esbuild';
-import { cp, mkdir, mkdtemp, readFile, writeFile, stat } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, writeFile, stat, readdir, unlink } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -28,7 +28,7 @@ console.log('[1/4] 准备安装版界面资源…');
 await buildRenderer({ base: './', build: { outDir: path.join(stage, 'renderer'), emptyOutDir: true, sourcemap: false } });
 console.log('[2/4] 打包桌面主进程和 PTY 原生组件…');
 await bundleMain({ entryPoints: ['electron/main.ts'], bundle: true, platform: 'node', format: 'cjs', target: 'node22',
-  outfile: path.join(stage, 'main.cjs'), external: ['electron', 'node-pty'], sourcemap: false, legalComments: 'eof' });
+  outfile: path.join(stage, 'main.cjs'), external: ['electron', 'node-pty'], minify: true, sourcemap: false, legalComments: 'eof' });
 await cp('electron/preload.cjs', path.join(stage, 'preload.cjs'));
 await mkdir(path.join(stage, 'resources'));
 for (const name of ['icon.ico', 'icon.png']) await cp(path.join(root, 'resources', name), path.join(stage, 'resources', name));
@@ -37,11 +37,17 @@ for (const name of ['LICENSE', 'README.md', 'README.en.md']) await cp(path.join(
 const ptySource = path.join(root, 'node_modules', 'node-pty');
 const ptyTarget = path.join(stage, 'node_modules', 'node-pty');
 await mkdir(ptyTarget, { recursive: true });
-for (const name of ['package.json', 'LICENSE', 'lib']) await cp(path.join(ptySource, name), path.join(ptyTarget, name), { recursive: true });
+await cp(path.join(ptySource, 'LICENSE'), path.join(ptyTarget, 'LICENSE'));
+await cp(path.join(ptySource, 'lib'), path.join(ptyTarget, 'lib'), { recursive: true,
+  filter: source => !source.endsWith('.map') && !source.endsWith('.test.js'),
+});
+// node-addon-api 只在编译原生扩展时使用，预编译的 node-pty 运行时不需要其头文件。
+const ptyMetadata = JSON.parse(await readFile(path.join(ptySource, 'package.json'), 'utf8'));
+await writeFile(path.join(ptyTarget, 'package.json'), JSON.stringify({ name: ptyMetadata.name, version: ptyMetadata.version,
+  main: ptyMetadata.main, license: ptyMetadata.license }, null, 2));
 await cp(path.join(ptySource, 'prebuilds', 'win32-x64'), path.join(ptyTarget, 'prebuilds', 'win32-x64'), {
   recursive: true, filter: source => !source.endsWith('.pdb'),
 });
-await cp(path.join(root, 'node_modules', 'node-addon-api'), path.join(stage, 'node_modules', 'node-addon-api'), { recursive: true });
 await writeFile(path.join(stage, 'package.json'), JSON.stringify({ name: metadata.name, productName: '项目工作台',
   version: metadata.version, description: metadata.description, author: 'liuyunsheng', license: metadata.license,
   main: 'main.cjs', dependencies: { 'node-pty': ptyVersion } }, null, 2));
@@ -86,9 +92,23 @@ await new Promise((resolve, reject) => {
 });
 const expectedOutput = path.resolve(output, 'AIProjectManager-win32-x64');
 if (path.dirname(expectedOutput) !== path.resolve(output)) throw new Error('发行目录边界无效');
+const electronLocales = new Set(['en-US.pak', 'zh-CN.pak']);
+async function trimLocales({ buildPath }) {
+  const directory = path.join(path.resolve(buildPath), 'locales');
+  let removedBytes = 0;
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.pak') || electronLocales.has(entry.name)) continue;
+    const filename = path.join(directory, entry.name);
+    removedBytes += (await stat(filename)).size;
+    await unlink(filename);
+  }
+  for (const filename of electronLocales) await stat(path.join(directory, filename));
+  console.log(`语言包仅保留中英文，移除 ${(removedBytes / 1024 / 1024).toFixed(2)} MiB`);
+}
 const [applicationDirectory] = await packager({ dir: stage, name: 'AIProjectManager', executableName: 'AIProjectManager',
   platform: 'win32', arch: 'x64', electronVersion, appVersion: metadata.version, buildVersion: metadata.version,
   out: output, overwrite: true, prune: false, asar: false, electronZipDir: working, icon: path.join(root, 'resources', 'icon.ico'),
+  afterExtract: [trimLocales],
   appCopyright: 'Copyright (c) 2026 liuyunsheng', win32metadata: {
     CompanyName: 'liuyunsheng', FileDescription: '项目工作台 · AI Project Manager', ProductName: 'AI Project Manager',
   } });
@@ -120,3 +140,18 @@ const hash = createHash('sha256');
 for await (const chunk of createReadStream(installer)) hash.update(chunk);
 await writeFile(`${installer}.sha256`, `${hash.digest('hex')}  ${path.basename(installer)}\n`, 'utf8');
 console.log(`\n安装包已生成：${installer}`);
+const installerBytes = (await stat(installer)).size;
+async function directoryBytes(directory) {
+  let bytes = 0;
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const filename = path.join(directory, entry.name);
+    if (entry.isDirectory()) bytes += await directoryBytes(filename);
+    else if (entry.isFile()) bytes += (await stat(filename)).size;
+  }
+  return bytes;
+}
+const sizeReport = { version: metadata.version, installerBytes, installedBytes: await directoryBytes(applicationDirectory),
+  appBytes: await directoryBytes(path.join(applicationDirectory, 'resources', 'app')),
+  localeBytes: await directoryBytes(path.join(applicationDirectory, 'locales')), locales: [...electronLocales] };
+await writeFile(path.join(output, `AIProjectManager-${metadata.version}-sizes.json`), JSON.stringify(sizeReport, null, 2), 'utf8');
+console.log(`安装包 ${(installerBytes / 1024 / 1024).toFixed(2)} MiB，安装目录 ${(sizeReport.installedBytes / 1024 / 1024).toFixed(2)} MiB`);
