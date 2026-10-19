@@ -24,7 +24,7 @@
 
 ![浅色主题：项目卡片、多服务管理与实时日志](docs/images/workspace.png)
 
-> 当前提供源码运行方式，优先支持 Windows，尚未提供发行安装包。本文截图取自当前源码界面，使用独立示例仓库；示例项目和日志仅用于展示。
+> 优先支持 Windows，提供源码启动与 EXE 安装包构建流程。本文截图取自当前源码界面，使用独立示例仓库；示例项目和日志仅用于展示。
 
 ## 为什么做这个工具
 
@@ -105,6 +105,14 @@
 
 ## 快速开始
 
+### 安装版（Windows x64）
+
+运行 `AIProjectManager-版本号-Setup-x64.exe`，按向导安装后从开始菜单打开，也可选择创建桌面快捷方式。默认安装在当前用户的应用目录，无需管理员权限。
+
+安装版内置 Electron、界面资源和 PTY 组件，打开工作台无需 Node.js 或 Vite 开发服务器。Git 操作仍需要系统 Git，启动目标项目仍需要对应的 Node.js、Python / uv、Java 等环境。卸载程序不会主动删除本机项目配置或用户仓库。
+
+目前可自行构建安装包，产物位于 `release/`；构建方法见 [Windows 打包说明](docs/packaging.md)。安装包尚未配置代码签名，Windows 可能显示未知发布者提示。
+
 ### 环境要求
 
 - **Windows**：当前主要面向的平台；其他系统尚未提供同等验证。
@@ -162,6 +170,7 @@ Windows 服务命令和终端默认使用 `cmd.exe`。需要 PowerShell 时，�
 | `npm run dev:desktop` | 启动桌面开发环境 |
 | `npm run desktop` / `npm run dev` | 桌面启动的兼容入口 |
 | `npm run dev:web` | 浏览器界面预览，不包含桌面文件、Git 和 PTY 能力 |
+| `npm run package:win` | 编译发行资源并通过 Inno Setup 6 生成 Windows x64 EXE 安装包 |
 | `npm run typecheck` | 检查 Vue、共享类型和 Electron 主进程类型 |
 | `npm test` | 核心逻辑测试，使用独立临时项目 |
 | `npm run test:desktop` | 桌面自动化场景 |
@@ -191,6 +200,7 @@ src/
   types/                前端类型入口
   views/                工作台与设置页面
 scripts/                启动与自动化脚本
+installer/              Inno Setup 安装配置
 tests/                  核心行为测试
 docs/                   架构说明与项目截图
 ```
@@ -231,11 +241,11 @@ docs/                   架构说明与项目截图
 uv run scripts/export-icons.py
 ```
 
-后续打包 Windows EXE 和安装程序时使用 `resources/icon.ico`。Electron 窗口图标设置不会自动替换 EXE 内嵌图标，打包时仍需配置。详见 [图标资源与打包说明](resources/README.md)。
+Windows 打包流程已将 `resources/icon.ico` 嵌入应用 EXE、安装程序和快捷方式。详见 [图标资源说明](resources/README.md) 和 [Windows 打包说明](docs/packaging.md)。
 
 ## 后续方向
 
-- 完善 Windows 发行安装包与升级体验。
+- 完善安装包发布、代码签名与升级体验。
 - 增加更多项目识别规则与可复用服务模板。
 - 继续完善 Git 合并交互、文件管理与大项目体验。
 - 探索按需启用的 AI 配置建议、日志诊断与提交说明草稿，保持基础功能独立可用。

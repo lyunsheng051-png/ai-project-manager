@@ -24,7 +24,7 @@ The interface features glass surfaces and light and dark themes. Core functional
 
 ![Light theme: project navigation, service management, and live logs](docs/images/workspace.png)
 
-> Currently available as a source-based development app, with Windows as the primary platform. No release installer is provided yet. Screenshots show the current source interface using an isolated demo repository. The desktop interface and screenshots are currently in Chinese; this is the English documentation.
+> Windows is the primary platform, with source-based development and an EXE installer build pipeline. Screenshots use an isolated demo repository. The desktop interface and screenshots are currently in Chinese; this is the English documentation.
 
 ## Why this project?
 
@@ -105,6 +105,14 @@ If a push is rejected because upstream has new commits, follow **Merge upstream 
 
 ## Quick start
 
+### Windows x64 installer
+
+Run `AIProjectManager-VERSION-Setup-x64.exe` and follow the wizard. Launch the app from the Start menu, or select the optional desktop shortcut. Installation defaults to the current user's application directory and does not require administrator privileges.
+
+The installer includes Electron, the UI assets, and PTY components. Opening the workbench does not require Node.js or a Vite server. Git operations still require system Git, and project commands need their corresponding runtimes. Uninstalling does not explicitly remove project preferences or user repositories.
+
+Build installers locally into `release/` using the [Windows packaging guide](docs/packaging.md). Code signing is not configured yet, so Windows may show an unknown-publisher prompt.
+
 ### Requirements
 
 - **Windows** is the primary platform. Other platforms have not received equivalent validation.
@@ -162,6 +170,7 @@ Built with Electron, Vue 3, Vite, and TypeScript. Code editing uses CodeMirror 6
 | `npm run dev:desktop` | Start the desktop development environment |
 | `npm run desktop` / `npm run dev` | Equivalent desktop launch aliases |
 | `npm run dev:web` | Browser UI preview without desktop file, Git, or PTY capabilities |
+| `npm run package:win` | Compile release resources and create a Windows x64 installer using Inno Setup 6 |
 | `npm run typecheck` | Check Vue, shared contracts, and Electron main-process types |
 | `npm test` | Core behavior tests using isolated temporary projects |
 | `npm run test:desktop` | Desktop automation scenarios |
@@ -191,6 +200,7 @@ src/
   types/                Frontend type exports
   views/                Workspace and settings
 scripts/                Launch, icon export, and automation scripts
+installer/              Inno Setup installer configuration
 tests/                  Core behavior tests
 docs/                   Architecture notes and screenshots
 ```
@@ -231,11 +241,11 @@ Re-export the icons after updating the source artwork:
 uv run scripts/export-icons.py
 ```
 
-For future Windows packaging, use `resources/icon.ico` as the executable icon and installer icon. Setting the Electron window icon does not embed an icon in an executable. See [asset and packaging notes](resources/README.md).
+The Windows packaging pipeline embeds `resources/icon.ico` into the application executable, installer, and shortcuts. See the [asset notes](resources/README.md) and [Windows packaging guide](docs/packaging.md).
 
 ## Roadmap
 
-- Windows release installers and an improved upgrade experience.
+- Release distribution, code signing, and an improved upgrade experience.
 - More project detection rules and reusable service templates.
 - Further improvements to Git merge interaction, file management, and larger workspaces.
 - Optional AI assistance for configuration suggestions, log diagnosis, and commit-message drafts, while keeping core features usable independently.

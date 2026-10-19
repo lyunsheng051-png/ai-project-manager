@@ -36,6 +36,6 @@ Pillow is declared in the script's inline dependency metadata. Python is only ne
 - **应用 EXE / Application executable**：把所选打包工具的 Windows EXE 图标设置为 `resources/icon.ico`。窗口图标设置不会自动修改 EXE 的资源。/ Set your packager's Windows executable icon to `resources/icon.ico`; the window icon does not change the executable's embedded resources.
 - **Inno Setup 安装包 / Installer**：通过 `SetupIconFile` 使用该 ICO；安装后的快捷方式可使用已嵌入图标的应用 EXE。/ Use the ICO through `SetupIconFile`; installed shortcuts can use the application executable's embedded icon.
 
-这里只提供图标及使用约定，尚未增加打包流程，也未生成 EXE 或安装包。
+项目已提供 `npm run package:win`，通过 Electron Packager 嵌入 EXE 图标，再使用 Inno Setup 6 生成安装包。详见 [Windows 打包说明](../docs/packaging.md)。
 
-These assets prepare the branding for packaging. They do not add a packaging pipeline or produce an executable or installer.
+Run `npm run package:win` to embed the executable icon with Electron Packager and create an installer with Inno Setup 6. See the [Windows packaging guide](../docs/packaging.md).

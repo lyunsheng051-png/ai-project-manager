@@ -72,11 +72,23 @@ for (const dependency of Object.keys(metadata.dependencies)) await collectLicens
 await writeFile(path.join(stage, 'THIRD_PARTY_LICENSES.txt'), notices.join('\n'), 'utf8');
 
 console.log('[3/4] 生成 Windows x64 应用目录并嵌入图标…');
+// 直接使用 npm ci 已安装的 Electron，避免再次下载同一运行时。
+const electronDirectory = path.join(path.dirname(require.resolve('electron/package.json')), 'dist');
+const installedVersion = (await readFile(path.join(electronDirectory, 'version'), 'utf8')).trim();
+if (installedVersion !== electronVersion) throw new Error('Electron 运行时与依赖版本不一致，请重新安装该依赖后打包。');
+const electronZip = path.join(working, `electron-v${electronVersion}-win32-x64.zip`);
+await new Promise((resolve, reject) => {
+  const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
+    'Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::CreateFromDirectory($env:AIPM_PACKAGE_ELECTRON_DIST, $env:AIPM_PACKAGE_ELECTRON_ZIP, [System.IO.Compression.CompressionLevel]::Fastest, $false)'],
+  { windowsHide: true, stdio: 'inherit', env: { ...process.env, AIPM_PACKAGE_ELECTRON_DIST: electronDirectory, AIPM_PACKAGE_ELECTRON_ZIP: electronZip } });
+  child.once('error', reject);
+  child.once('exit', code => code === 0 ? resolve() : reject(new Error(`准备 Electron 运行时失败，退出码 ${code}`)));
+});
 const expectedOutput = path.resolve(output, 'AIProjectManager-win32-x64');
 if (path.dirname(expectedOutput) !== path.resolve(output)) throw new Error('发行目录边界无效');
 const [applicationDirectory] = await packager({ dir: stage, name: 'AIProjectManager', executableName: 'AIProjectManager',
   platform: 'win32', arch: 'x64', electronVersion, appVersion: metadata.version, buildVersion: metadata.version,
-  out: output, overwrite: true, prune: false, asar: false, icon: path.join(root, 'resources', 'icon.ico'),
+  out: output, overwrite: true, prune: false, asar: false, electronZipDir: working, icon: path.join(root, 'resources', 'icon.ico'),
   appCopyright: 'Copyright (c) 2026 liuyunsheng', win32metadata: {
     CompanyName: 'liuyunsheng', FileDescription: '项目工作台 · AI Project Manager', ProductName: 'AI Project Manager',
   } });
