@@ -1,17 +1,15 @@
 .branch-switcher { cursor: pointer; }
 .branch-switcher:not(:disabled):hover, .branch-switcher[aria-expanded='true'] { border-color: var(--accent-outline); background: var(--accent-hover); color: var(--accent); }
-.branch-picker { position: fixed; z-index: 95; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 15px; background: var(--glass-modal); color: var(--ink); box-shadow: var(--glass-edge), var(--floating-shadow); backdrop-filter: blur(28px) saturate(140%); }
-.branch-picker > header { display: flex; align-items: center; gap: 7px; flex-shrink: 0; height: 37px; padding: 0 9px 0 13px; color: var(--secondary); font-size: 11px; }
-.branch-picker > header small { color: var(--muted); font: 10px 'Cascadia Code', Consolas, monospace; }
+.branch-picker { z-index: 95; display: flex; flex-direction: column; overflow: hidden; }
+.branch-picker > header { display: flex; align-items: center; gap: 7px; flex-shrink: 0; height: 37px; padding: 0 9px 0 13px; color: var(--secondary); font-size: var(--text-xs); }
+.branch-picker > header small { color: var(--muted); font: var(--text-xs) var(--font-mono); }
 .branch-picker > header .icon-button { width: 25px; height: 25px; margin-left: auto; }
-.branch-picker-search { display: flex; align-items: center; gap: 7px; flex-shrink: 0; padding: 0 12px 5px; border-bottom: 1px solid var(--line); color: var(--muted); }
-.branch-picker-search input { width: 100%; min-width: 0; min-height: 29px; padding: 5px 0; border: 0; background: none; box-shadow: none; font-size: 12px; }
+.branch-picker-search { display: flex; align-items: center; gap: 7px; flex-shrink: 0; margin: 0 6px 5px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--field); color: var(--muted); }
+.branch-picker-search:focus-within { border-color: var(--accent-outline); box-shadow: 0 0 0 2px var(--focus-halo); }
+.branch-picker-search input { width: 100%; min-width: 0; min-height: 29px; padding: 5px 0; border: 0; background: none; box-shadow: none; font-size: var(--text-sm); }
 .branch-picker-list { flex: 1; min-height: 0; max-height: 320px; padding: 5px; overflow: auto; overscroll-behavior: contain; }
-.branch-picker-list > button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 34px; padding: 8px 9px; border-radius: 8px; color: var(--secondary); text-align: left; }
-.branch-picker-list > button:not(:disabled):hover { background: var(--control-hover); color: var(--ink); }
 .branch-picker-list > button.current { background: var(--accent-soft); color: var(--accent); }
-.branch-picker-list > button:focus-visible { outline-offset: -2px; }
-.branch-picker-list > button > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 11px 'Cascadia Code', Consolas, monospace; }
-.branch-picker-list > button > small { flex-shrink: 0; font-size: 10px; }
-.branch-picker-error { padding: 15px; color: var(--danger); font-size: 11px; overflow: auto; }
+.branch-picker-list > button > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--text-sm) var(--font-mono); }
+.branch-picker-list > button > small { flex-shrink: 0; padding: 1px 5px; border: 1px solid var(--accent-line); border-radius: var(--radius-inset); font-size: var(--text-xs); }
+.branch-picker-error { padding: 15px; color: var(--danger); font-size: var(--text-xs); overflow: auto; }
 .branch-picker-error p { margin-bottom: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }

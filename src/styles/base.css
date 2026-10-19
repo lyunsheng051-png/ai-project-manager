@@ -8,6 +8,7 @@ body {
     var(--canvas);
   background-attachment: fixed;
   color: var(--ink);
+  line-height: 1.5;
 }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; color: inherit; }
@@ -28,24 +29,24 @@ h1, h2, h3, p { margin: 0; }
 h1 { font-size: 23px; font-weight: 620; letter-spacing: -.7px; }
 h2 { font-size: 15px; font-weight: 620; }
 h3 { font-size: 14px; font-weight: 600; }
-code, pre, .mono { font-family: 'Cascadia Code', 'Cascadia Mono', Consolas, monospace; }
+code, pre, .mono { font-family: var(--font-mono); }
 pre { margin: 0; tab-size: 2; }
 svg { flex-shrink: 0; }
 .muted { color: var(--secondary); }
 .danger-text { color: var(--danger) !important; }
 .button-group { display: flex; align-items: center; gap: 8px; }
-.button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 35px; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--control); color: var(--ink); white-space: nowrap; font-size: 12px; font-weight: 600; box-shadow: var(--glass-edge), 0 2px 4px #0206110a; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 35px; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--control); color: var(--ink); white-space: nowrap; font-size: var(--text-sm); font-weight: 600; box-shadow: var(--glass-edge), 0 2px 4px #0206110a; }
 .button:not(:disabled):hover { background: var(--control-hover); border-color: var(--accent-outline); box-shadow: var(--glass-edge), 0 3px 10px var(--focus-halo); }
 .button:not(:disabled):active { transform: translateY(1px); box-shadow: var(--glass-edge); }
-.button > svg { color: var(--accent); }
+.button > svg { color: var(--secondary); }
 .button.primary { color: var(--primary-ink); background: linear-gradient(135deg, var(--primary), var(--primary-hover)); border-color: var(--primary-border); box-shadow: var(--primary-shadow); }
 .button.primary:not(:disabled):hover { background: var(--primary-hover); border-color: var(--primary-border-hover); }
 .button.primary > svg { color: inherit; }
 .button.small { min-height: 30px; padding: 5px 10px; }
-.text-button, .link-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 5px 6px; border-radius: 7px; color: var(--secondary); font-size: 12px; white-space: nowrap; }
+.text-button, .link-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 5px 6px; border-radius: var(--radius); color: var(--secondary); font-size: var(--text-sm); white-space: nowrap; }
 .text-button:not(:disabled):hover, .link-button:not(:disabled):hover { color: var(--accent); }
 .link-button { padding: 0; color: var(--accent); }
-.icon-button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; border: 1px solid transparent; border-radius: 8px; color: var(--secondary); }
+.icon-button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; border: 1px solid transparent; border-radius: var(--radius); color: var(--secondary); }
 .icon-button:not(:disabled):hover { background: var(--control-hover); border-color: var(--line-strong); color: var(--accent); }
 .icon-button:not(:disabled):active { background: var(--accent-soft); }
 .button.stop-button, .text-button.stop-button { color: var(--danger); }
@@ -54,10 +55,10 @@ svg { flex-shrink: 0; }
 .stop-button:not(:disabled):hover { color: var(--danger); background: var(--danger-soft); border-color: var(--danger); }
 .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
 .status-dot.running { background: var(--success); }
-.eyebrow { color: var(--muted); font-family: 'Cascadia Code', Consolas, monospace; font-size: 10px; letter-spacing: 2px; }
+.eyebrow { color: var(--muted); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 2px; }
 .spin { animation: spin 1.2s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 ::-webkit-scrollbar { width: 7px; height: 7px; }
-::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 7px; }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: var(--radius); }
 ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

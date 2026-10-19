@@ -46,14 +46,14 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-  <Teleport to="body"><div ref="menu" class="file-tree-context-menu" role="menu" aria-label="文件操作" :style="{ left: `${left}px`, top: `${top}px` }" @keydown="keydown" @contextmenu.prevent>
+  <Teleport to="body"><div ref="menu" class="file-tree-context-menu floating-panel" role="menu" aria-label="文件操作" :style="{ left: `${left}px`, top: `${top}px` }" @keydown="keydown" @contextmenu.prevent>
     <div class="file-tree-context-location" :title="location">{{ selectionCount > 1 ? `已选择 ${selectionCount} 项` : location }}</div>
-    <button role="menuitem" @click="emit('create', 'file')"><AppIcon name="FilePlus" :size="15" />新建文件</button>
-    <button role="menuitem" @click="emit('create', 'directory')"><AppIcon name="FolderPlus" :size="15" />新建目录</button>
+    <button role="menuitem" class="menu-item" @click="emit('create', 'file')"><AppIcon name="FilePlus" :size="15" />新建文件</button>
+    <button role="menuitem" class="menu-item" @click="emit('create', 'directory')"><AppIcon name="FolderPlus" :size="15" />新建目录</button>
     <div class="file-tree-menu-separator" role="separator" />
-    <button role="menuitem" :disabled="!canCopy" title="复制磁盘中的文件内容，未保存的编辑请先按 Ctrl+S 保存" @click="emit('copy')"><AppIcon name="Copy" :size="15" />{{ selectionCount > 1 ? `复制 ${selectionCount} 项` : '复制' }}<kbd>Ctrl+C</kbd></button>
-    <button role="menuitem" @click="emit('paste')"><AppIcon name="ClipboardPaste" :size="15" />粘贴到此目录<kbd>Ctrl+V</kbd></button>
+    <button role="menuitem" class="menu-item" :disabled="!canCopy" title="复制磁盘中的文件内容，未保存的编辑请先按 Ctrl+S 保存" @click="emit('copy')"><AppIcon name="Copy" :size="15" />{{ selectionCount > 1 ? `复制 ${selectionCount} 项` : '复制' }}<kbd>Ctrl+C</kbd></button>
+    <button role="menuitem" class="menu-item" @click="emit('paste')"><AppIcon name="ClipboardPaste" :size="15" />粘贴到此目录<kbd>Ctrl+V</kbd></button>
     <div class="file-tree-menu-separator" role="separator" />
-    <button role="menuitem" class="danger-text" :disabled="!canCopy" @click="emit('remove')"><AppIcon name="Trash2" :size="15" />{{ selectionCount > 1 ? `删除 ${selectionCount} 项` : '删除' }}<kbd>Delete</kbd></button>
+    <button role="menuitem" class="menu-item danger-text" :disabled="!canCopy" @click="emit('remove')"><AppIcon name="Trash2" :size="15" />{{ selectionCount > 1 ? `删除 ${selectionCount} 项` : '删除' }}<kbd>Delete</kbd></button>
   </div></Teleport>
 </template>

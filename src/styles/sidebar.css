@@ -7,7 +7,7 @@
 .sidebar-rail-tools { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; padding: 0 0 12px; margin: 0 8px 12px; border-bottom: 1px solid var(--line); }
 .sidebar-rail-tools .icon-button { width: 34px; height: 34px; }
 .sidebar-rail-tools .icon-button.active { color: var(--accent); background: var(--accent-soft); }
-.sidebar-rail-pagination { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; padding: 8px 0 0; color: var(--muted); font: 9px 'Cascadia Code', Consolas, monospace; }
+.sidebar-rail-pagination { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; padding: 8px 0 0; color: var(--muted); font: var(--text-xs) var(--font-mono); }
 .sidebar-rail-pagination > div { display: flex; }
 .sidebar-rail-pagination .icon-button { width: 22px; height: 24px; }
 .app-shell.sidebar-collapsed { --sidebar-width: 60px; }
@@ -17,8 +17,8 @@
 .sidebar-collapsed .project-list { padding: 0 6px; }
 .sidebar-collapsed .project-item { min-height: 42px; margin-bottom: 6px; }
 .sidebar-collapsed .project-link { justify-content: center; min-height: 40px; padding: 8px 0; }
-.sidebar-collapsed .project-link > svg { width: 28px; height: 28px; padding: 5px; }
-.sidebar-collapsed .project-link > span, .sidebar-collapsed .sidebar-label { display: none; }
+.sidebar-collapsed .project-identity { width: 28px; height: 28px; font-size: var(--text-xs); }
+.sidebar-collapsed .project-link > .project-label, .sidebar-collapsed .sidebar-label { display: none; }
 .sidebar-collapsed .sidebar-empty { padding: 10px 0; text-align: center; }
 .sidebar-collapsed .sidebar-add { gap: 4px; margin: 10px 8px 12px; padding-top: 10px; flex-shrink: 0; }
 .sidebar-collapsed .sidebar-add button { justify-content: center; min-height: 34px; padding: 8px 0; }

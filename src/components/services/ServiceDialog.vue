@@ -28,7 +28,7 @@ async function save() {
 }
 </script>
 <template>
-  <AppModal :title="profile ? '编辑运行配置' : '添加运行配置'" subtitle="运行前核对目录和命令。配置仅保存在本机。" @close="!busy && emit('close')">
+  <AppModal icon="Settings" :title="profile ? '编辑运行配置' : '添加运行配置'" subtitle="运行前核对目录和命令。配置仅保存在本机。" @close="!busy && emit('close')">
     <form id="service-form" class="form-stack" @submit.prevent="save">
       <div class="form-row"><label>服务名称<input v-model="form.name" required maxlength="100" placeholder="例如：管理端前端" /></label><label>服务类型<select v-model="form.kind"><option v-for="(label, value) in kindLabels" :key="value" :value="value">{{ label }}</option></select></label></div>
       <label>工作目录 <span class="muted">相对于项目根目录</span><input v-model="form.directory" required placeholder="web 或 backend，根目录为 ." class="mono" /></label>

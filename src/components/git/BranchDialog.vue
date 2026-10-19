@@ -27,7 +27,7 @@ async function act(operation: 'create-branch' | 'switch' | 'merge', target: stri
 onMounted(() => ws.task('读取分支', load));
 </script>
 <template>
-  <AppModal title="分支管理" subtitle="切换分支不会自动丢弃或暂存你的修改。" @close="!busy && emit('close')">
+  <AppModal icon="GitBranch" title="分支管理" subtitle="切换分支不会自动丢弃或暂存你的修改。" @close="!busy && emit('close')">
     <form class="branch-create" @submit.prevent="act('create-branch', name)"><input v-model="name" required placeholder="新分支名称，例如 feat/project-scan" class="mono" /><button class="button primary" :disabled="busy || !name.trim()"><AppIcon name="Plus" />创建并切换</button></form>
     <div class="search-field"><AppIcon name="Search" /><input v-model="search" placeholder="搜索本地分支" /></div>
     <div class="branch-list"><div v-for="branch in pager.rows.value" :key="branch.name" class="branch-row"><AppIcon name="GitBranch" /><span class="mono">{{ branch.name }}<small>{{ branch.hash }}</small></span><span v-if="branch.current" class="kind-tag">当前</span><div v-else class="button-group"><button class="button small" :disabled="busy" @click="act('switch', branch.name)">切换</button><button class="button small" :disabled="busy" @click="act('merge', branch.name)">合并到当前</button></div></div><p v-if="!branches.length" class="empty-inline">首次提交后可管理分支。</p></div>

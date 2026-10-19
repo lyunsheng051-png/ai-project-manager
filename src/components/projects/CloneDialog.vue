@@ -20,7 +20,7 @@ async function clone() {
 }
 </script>
 <template>
-  <AppModal title="克隆 Git 仓库" subtitle="克隆完成后将自动识别项目中的服务。" @close="!busy && emit('close')">
+  <AppModal icon="Download" title="克隆 Git 仓库" subtitle="克隆完成后将自动识别项目中的服务。" @close="!busy && emit('close')">
     <form id="clone-form" class="form-stack" @submit.prevent="clone">
       <label>仓库地址<input v-model="url" required placeholder="https://github.com/your-name/project.git" :disabled="busy" /></label>
       <label>本地文件夹名称<input v-model="name" required placeholder="project-name" :disabled="busy" /></label>

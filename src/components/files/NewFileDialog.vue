@@ -28,7 +28,7 @@ async function create() {
 }
 </script>
 <template>
-  <AppModal :title="title" :subtitle="kind === 'directory' ? '在所选位置创建目录。' : '创建空文件后自动打开，编辑内容按 Ctrl+S 保存。'" @close="!busy && emit('close')">
+  <AppModal :icon="kind === 'directory' ? 'FolderPlus' : 'FilePlus'" :title="title" :subtitle="kind === 'directory' ? '在所选位置创建目录。' : '创建空文件后自动打开，编辑内容按 Ctrl+S 保存。'" @close="!busy && emit('close')">
     <form id="new-file-entry-form" class="form-stack" @submit.prevent="create">
       <div class="file-create-location"><AppIcon name="FolderOpen" :size="15" /><span>创建位置</span><code :title="`${project.path}${parentPath ? `/${parentPath}` : ''}`">{{ location }}</code></div>
       <label>{{ kind === 'directory' ? '目录名称' : '文件名称' }}<input v-model="name" required maxlength="255" :disabled="busy" :placeholder="kind === 'directory' ? '例如：components' : '例如：example.ts'" autocomplete="off" spellcheck="false" :aria-invalid="Boolean(error || (name && invalid))" aria-describedby="file-create-hint" /></label>

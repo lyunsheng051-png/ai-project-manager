@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import AppIcon from '@/components/common/AppIcon.vue';
 import PaginationControls from '@/components/common/PaginationControls.vue';
 import CloneDialog from '@/components/projects/CloneDialog.vue';
+import ProjectIdentity from '@/components/projects/ProjectIdentity.vue';
 import { useWorkspace } from '@/composables/useWorkspace';
 import { usePagination } from '@/composables/usePagination';
 import { useTheme } from '@/composables/useTheme';
@@ -54,7 +55,7 @@ async function remove(project: Project) {
       <div v-if="sidebar.collapsed.value" class="sidebar-rail-tools"><button class="icon-button" :class="{ active: search }" :disabled="sidebar.busy.value" :title="search ? `搜索项目：${search}` : '搜索项目'" aria-label="展开并搜索项目" @click="expandSearch"><AppIcon name="Search" :size="16" /></button><button class="icon-button" :class="{ active: favorites }" :aria-pressed="favorites" :title="favorites ? '显示所有项目' : '仅显示收藏项目'" :aria-label="favorites ? '显示所有项目' : '仅显示收藏项目'" @click="favorites = !favorites"><AppIcon name="Star" :size="16" /></button></div>
       <div class="project-list">
         <div v-for="project in pager.rows.value" :key="project.id" class="project-item" :class="{ selected: project.id === ws.activeId.value && route.path === '/' }">
-          <button class="project-link" :title="`${project.name}\n${project.path}`" :aria-label="`打开项目：${project.name}`" @click="choose(project.id)"><AppIcon name="Folder" :size="18" /><span><strong>{{ project.name }}</strong><small>{{ project.path }}</small></span></button>
+          <button class="project-link" :title="`${project.name}\n${project.path}`" :aria-label="`打开项目：${project.name}`" @click="choose(project.id)"><ProjectIdentity :name="project.name" :path="project.path" /><span class="project-label"><strong>{{ project.name }}</strong><small>{{ project.path }}</small></span></button>
           <div v-show="!sidebar.collapsed.value" class="project-record-actions" role="group" :aria-label="`项目操作：${project.name}`">
             <button class="project-star" :class="{ starred: project.favorite }" :aria-label="project.favorite ? '取消收藏' : '收藏项目'" :title="project.favorite ? '取消收藏' : '收藏项目'" @click="favorite(project.id)"><AppIcon name="Star" :size="13" /></button>
             <button class="project-remove" :aria-label="`移除项目记录：${project.name}`" :title="removingId === project.id ? '正在移除项目记录…' : '移除项目记录，保留磁盘文件'" :disabled="Boolean(removingId)" @click="remove(project)"><AppIcon :name="removingId === project.id ? 'Loader' : 'Trash2'" :size="13" :class="{ spin: removingId === project.id }" /></button>
