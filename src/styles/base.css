@@ -2,9 +2,8 @@
 html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body {
   background:
-    radial-gradient(ellipse 72% 62% at 4% -12%, var(--canvas-glow-blue), transparent 68%),
-    radial-gradient(ellipse 52% 58% at 96% 8%, var(--canvas-glow-violet), transparent 70%),
-    radial-gradient(ellipse 70% 55% at 48% 112%, var(--canvas-glow-teal), transparent 72%),
+    var(--wallpaper-shade),
+    url('../assets/liquid-wallpaper.svg') center / cover no-repeat,
     var(--canvas);
   background-attachment: fixed;
   color: var(--ink);

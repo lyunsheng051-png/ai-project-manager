@@ -1,0 +1,140 @@
+/* Liquid material treatment. Editing surfaces keep their own solid colors. */
+.sidebar,
+.main-shell {
+  border-color: var(--liquid-border);
+  background: var(--liquid-sheen), var(--main-glass);
+  box-shadow: var(--glass-edge), var(--panel-shadow);
+  backdrop-filter: blur(22px) saturate(160%);
+}
+.sidebar { background: var(--liquid-sheen), var(--sidebar); }
+.app-titlebar { background: var(--titlebar); border-bottom-color: var(--liquid-border); }
+.workspace-topbar { padding: 0 18px; border-bottom: 0; background: transparent; }
+.workspace-project h1 { font-weight: 650; letter-spacing: -.35px; }
+.project-path { color: var(--secondary); }
+.statusbar { background: var(--status-glass); border-top-color: var(--liquid-border); }
+
+.brand-symbol { border-radius: 12px; box-shadow: var(--glass-edge), var(--primary-shadow); }
+.sidebar-search {
+  border-color: var(--liquid-border);
+  border-radius: var(--radius-pill);
+  background: var(--liquid-sheen), var(--control);
+  box-shadow: var(--glass-edge), 0 2px 6px #081b3110;
+}
+.sidebar-filters { gap: 3px; margin: 14px 14px 11px; padding: 3px; border: 1px solid var(--liquid-border); border-radius: var(--radius-pill); background: var(--glass); box-shadow: var(--glass-edge); }
+.sidebar-filters button { justify-content: center; flex: 1; padding: 5px 9px; border: 0; border-radius: var(--radius-pill); }
+.sidebar-filters button.active { color: var(--ink); background: var(--liquid-selected); box-shadow: var(--glass-edge), var(--liquid-shadow); font-weight: 600; }
+.project-item { background: var(--card-sheen), var(--card-glass); border-color: var(--card-border); box-shadow: var(--card-edge), 0 5px 14px #081b311a; backdrop-filter: blur(6px) saturate(125%); }
+.project-item.selected { background: var(--card-sheen), var(--card-selected); border-color: var(--accent-outline); box-shadow: var(--card-edge), var(--liquid-shadow); }
+.project-item:not(.selected):hover { background: var(--card-sheen), var(--card-hover); border-color: var(--card-border); }
+.project-identity { border-radius: 10px; border-color: var(--liquid-border); }
+.project-record-actions button { border-radius: 50%; }
+.sidebar-add { border-top-color: var(--liquid-border); }
+.sidebar-add button { border-radius: var(--radius-pill); }
+.sidebar-bottom { background: var(--sidebar-deep); border-top-color: var(--liquid-border); }
+.sidebar-toggle, .theme-toggle { border-color: var(--liquid-border); border-radius: var(--radius-pill); background: var(--liquid-sheen), var(--control); box-shadow: var(--glass-edge); }
+
+/* A floating capsule keeps the navigation distinct from the document surface. */
+.project-tabs {
+  align-self: flex-start;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  height: 36px;
+  min-height: 36px;
+  gap: 3px;
+  margin: 5px 16px 5px;
+  padding: 3px;
+  border: 1px solid var(--liquid-border);
+  border-radius: var(--radius-pill);
+  background: var(--liquid-sheen), var(--glass);
+  box-shadow: var(--glass-edge), var(--liquid-shadow);
+}
+.project-tabs button { gap: 6px; padding: 0 11px; border: 0; border-radius: var(--radius-pill); color: var(--secondary); white-space: nowrap; }
+.project-tabs button > svg { width: 15px; height: 15px; padding: 0; border-radius: 0; background: none; color: inherit; }
+.project-tabs button:hover { background: var(--control-hover); color: var(--ink); }
+.project-tabs button.active { background: var(--liquid-selected); color: var(--accent); box-shadow: var(--glass-edge), 0 2px 8px #0615281c; font-weight: 650; }
+.project-tabs button > span { color: inherit; background: var(--control); border: 0; border-radius: var(--radius-pill); padding: 0 5px; }
+.workspace-content { padding-top: 8px; }
+
+.button {
+  color: var(--accent);
+  border-color: var(--accent-line);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(155deg, #ffffff0c, #ffffff00 55%), var(--accent-soft);
+  box-shadow: var(--glass-edge), 0 3px 8px #081b3114;
+}
+.button > svg { color: inherit; }
+.button:not(:disabled):hover { border-color: var(--accent-outline); background: linear-gradient(155deg, #ffffff0c, #ffffff00 55%), var(--accent-hover); box-shadow: var(--glass-edge), var(--liquid-shadow); }
+.button:not(:disabled):active { transform: scale(.98); }
+.button.primary { color: var(--primary-ink); border-color: var(--primary-border); background: linear-gradient(155deg, #ffffff1a, #ffffff00 55%), var(--primary); box-shadow: var(--glass-edge), var(--primary-shadow); }
+.button.primary:not(:disabled):hover { background: linear-gradient(155deg, #ffffff24, #ffffff00 55%), var(--primary-hover); }
+.icon-button, .pane-action, .text-button { border-radius: var(--radius-pill); }
+.icon-button:not(:disabled):hover { border-color: var(--liquid-border); background: var(--control-hover); box-shadow: var(--glass-edge); }
+.branch-badge { background: var(--liquid-sheen), var(--control); border-color: var(--liquid-border); }
+input:not([type='checkbox']):not([type='radio']), textarea, select { border-color: var(--line-strong); }
+
+.service-card { background: var(--card-sheen), var(--card-glass); border-color: var(--card-border); box-shadow: var(--card-edge), var(--panel-shadow); backdrop-filter: blur(6px) saturate(125%); }
+.service-card:hover { background: var(--card-sheen), var(--card-hover); border-color: var(--card-border); box-shadow: var(--card-edge), var(--liquid-shadow); }
+.service-card.is-running { border-color: var(--success-line); }
+.service-rail { border-right-color: var(--liquid-border); }
+.service-rail::before { left: 5px; }
+.service-symbol { border-radius: 12px; border-color: var(--liquid-border); }
+.kind-tag, .run-status { border-radius: var(--radius-pill); }
+.button.start-button { color: var(--primary-ink); border-color: var(--success-line); background: linear-gradient(155deg, #ffffff14, #ffffff00 55%), var(--action-success); }
+.button.start-button:not(:disabled):hover { background: var(--action-success-hover); border-color: var(--success); }
+.button.stop-button, .button.file-delete-confirm { color: var(--primary-ink); border-color: var(--danger-line); background: linear-gradient(155deg, #ffffff14, #ffffff00 55%), var(--action-danger); }
+.button.stop-button:not(:disabled):hover, .button.file-delete-confirm:not(:disabled):hover { background: var(--action-danger-hover); border-color: var(--danger); }
+
+.git-sync-actions, .segmented, .staging-actions { border-color: var(--liquid-border); border-radius: var(--radius-pill); background: var(--liquid-sheen), var(--control); box-shadow: var(--glass-edge); }
+.git-tool-button, .git-sync-actions .git-tool-button, .segmented button, .staging-actions .pane-action { border-radius: var(--radius-pill); }
+.git-sync-actions .git-tool-button + .git-tool-button::before { display: none; }
+.git-sync-actions .git-push { color: var(--primary-ink); border-color: var(--primary-border); background: linear-gradient(155deg, #ffffff1a, #ffffff00 55%), var(--primary); box-shadow: var(--glass-edge); }
+.git-sync-actions .git-push:not(:disabled):hover { color: var(--primary-ink); border-color: var(--primary-border-hover); background: var(--primary-hover); }
+.segmented button.active { background: var(--liquid-selected); color: var(--accent); box-shadow: var(--glass-edge), 0 2px 6px #06152814; }
+.git-columns, .file-columns, .history-panel { background: var(--card-sheen), var(--card-glass); border-color: var(--card-border); box-shadow: var(--card-edge), var(--panel-shadow); backdrop-filter: blur(6px) saturate(125%); }
+.changes-actions, .diff-header, .file-tree-toolbar, .commit-form { background: var(--panel-chrome); }
+.file-tree { background: transparent; }
+.file-tree-row:hover { border-radius: var(--radius-inset); }
+.file-tree-row.selected { border-radius: var(--radius-inset); }
+.file-tabs, .file-editor-header.has-document, .code-editor-status, .image-preview-toolbar, .image-preview-status { background: var(--editor-chrome); }
+.file-tab-close { border-radius: 50%; }
+
+.output-dock { border-top-color: var(--liquid-border); }
+.dock-header { padding-left: 14px; background: var(--liquid-sheen), var(--panel-chrome); }
+.dock-tabs { gap: 4px; padding: 4px 0; }
+.dock-tabs > button { gap: 6px; padding: 0 10px; border: 0; border-radius: var(--radius-pill); }
+.dock-tabs > button.active { background: var(--liquid-selected); color: var(--accent); box-shadow: var(--glass-edge), 0 2px 6px #06152814; }
+.settings-card, .empty-card { background: var(--card-sheen), var(--card-glass); border-color: var(--card-border); box-shadow: var(--card-edge), var(--panel-shadow); backdrop-filter: blur(6px) saturate(125%); }
+.theme-option { border-color: var(--liquid-border); background: var(--liquid-sheen), var(--control); }
+.theme-option.selected { border-color: var(--accent-outline); background: var(--liquid-sheen), var(--liquid-selected); }
+
+.modal, .floating-panel, .toast { background: var(--liquid-sheen), var(--glass-modal); border-color: var(--liquid-border); box-shadow: var(--glass-edge), var(--floating-shadow); backdrop-filter: blur(28px) saturate(150%); }
+.modal > footer { background: var(--glass); border-top-color: var(--liquid-border); }
+.modal-symbol { border-radius: 12px; border-color: var(--liquid-border); box-shadow: var(--glass-edge); }
+.toast { border-left-color: var(--toast-tone); }
+.toast-symbol { border-radius: 50%; }
+.menu-item { border-radius: var(--radius); }
+.menu-item:not(:disabled):hover, .menu-item:focus-visible { background: var(--liquid-selected); }
+.menu-item.danger-text:not(:disabled):hover, .menu-item.danger-text:focus-visible { background: var(--danger-soft); }
+.branch-picker-list > button.current { background: var(--liquid-selected); }
+.sidebar-collapsed .project-item { border-radius: 15px; }
+
+/* Semantic operation colors take priority over the neutral glass material. */
+.git-tool-button.git-branches { color: var(--violet); border-color: var(--line); background: var(--violet-soft); }
+.git-tool-button.git-branches > svg { color: inherit; }
+.git-tool-button.git-branches:not(:disabled):hover { color: var(--violet); border-color: var(--violet); background: var(--violet-soft); }
+.git-sync-actions .git-fetch { color: var(--accent); background: var(--accent-soft); }
+.git-sync-actions .git-pull { color: var(--teal); background: var(--teal-soft); }
+.git-sync-actions .git-fetch:not(:disabled):hover { color: var(--accent); background: var(--accent-hover); }
+.git-sync-actions .git-pull:not(:disabled):hover { color: var(--teal); background: var(--teal-soft); border-color: var(--teal); }
+.staging-actions .stage-action:not(:disabled) { color: var(--success); background: var(--success-soft); }
+.staging-actions .stage-action:not(:disabled):hover { color: var(--success); background: var(--success-soft); box-shadow: inset 0 0 0 1px var(--success-line); }
+.staging-actions .unstage-action:not(:disabled) { color: var(--warning); background: var(--warning-soft); }
+.staging-actions .unstage-action:not(:disabled):hover { color: var(--warning); background: var(--warning-soft); box-shadow: inset 0 0 0 1px var(--warning-line); }
+.modal > footer > .button:not(.primary):not(.file-delete-confirm):not(.stop-button) { color: var(--secondary); border-color: var(--liquid-border); background: var(--liquid-sheen), var(--control); }
+.modal > footer > .button:not(.primary):not(.file-delete-confirm):not(.stop-button):not(:disabled):hover { color: var(--ink); background: var(--control-hover); }
+
+@media (prefers-reduced-transparency: reduce) {
+  .sidebar, .main-shell, .service-card, .project-item, .settings-card, .empty-card, .git-columns, .file-columns, .history-panel { background: var(--surface-subtle); backdrop-filter: none; }
+  .modal, .floating-panel, .toast { background: var(--surface); backdrop-filter: none; }
+  .project-tabs, .sidebar-search, .sidebar-filters { background: var(--surface-subtle); }
+}
